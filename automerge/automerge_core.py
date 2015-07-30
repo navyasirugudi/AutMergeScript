@@ -338,6 +338,11 @@ def setSubModuleCommitOnSource(srcbranch, target, sha):
     tryFatal("git submodule update")
 
 #this returns the submodule paths in the repo
+
+def gitUrl():
+    #return "git.soma.salesforce.com:insights"
+    return "github.com:navyasirugudi"
+
 def getSubModules():
     if (not os.path.isfile(".gitmodules")):
         return []
@@ -345,7 +350,7 @@ def getSubModules():
     gitmfile = open("file.txt", "r")
     modules = []
 
-    urlregex = "url(.*)=(.*)git@git.soma.salesforce.com:insights/(.*).git"
+    urlregex = "url(.*)=(.*)git@%s/(.*).git"%gitUrl()
     pathregex = "path(.*)=(.*)"
 
     url = re.compile(urlregex)
@@ -409,9 +414,13 @@ def getNamingConvention(reponame, branch):
 
     return reponame + "_" + branch
 
+def getRepoLink():
+    #return "https://git.soma.salesforce.com/insights/(.*).git"
+    return "https://github.com/navyasirugudi/(.*).git"
+
 def getRepoName():
     url = tryFatal1("git config remote.origin.url")
-    urlRegex = "https://git.soma.salesforce.com/insights/(.*).git"
+    urlRegex = getRepoLink()
     urlMatcher = urlRegex.Compile()
 
     matches = urlMatcher.match(url)
