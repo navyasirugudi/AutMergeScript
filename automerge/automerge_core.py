@@ -258,7 +258,10 @@ def validateSubModule(reponame, repoBranch, submodule, submSha):
     if (not brExists):
         return False, "Expected branch %s doesn't exist for the submodule: %s"%(submBrName, submodule["name"])
 
-    if submSha != getHead(submBrName, submodule["path"]):
+    headOfBranch = getHead(submBrName, submodule["path"])
+    print "submSha: %s, headOfBranch: %s"%(submSha, headOfBranch)
+
+    if submSha != headOfBranch:
         return False, "%s's submodule \"%s\" on %s is not pointing to the head of submodule's release branch %s"%(reponame, submodule["name"], repoBranch, submBrName)
 
     print "returning well for %s on subModule %s for branch %s"%(reponame, submodule["path"], repoBranch)
@@ -420,6 +423,7 @@ def getSubModules():
 
 #gets the sha of the head of the submodule under that branch
 def getHead(branch, submodule):
+    print "Getting head of subModule %s on branch %s"%(submodule, branch)
     curPath = tryFatal1("pwd")
 
     chdir(submodule)
