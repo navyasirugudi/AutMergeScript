@@ -347,7 +347,7 @@ def getSubModules():
     if (not os.path.isfile(".gitmodules")):
         return []
 
-    gitmfile = open("file.txt", "r")
+    gitmfile = open(".gitmodules", "r")
     modules = []
 
     urlregex = "url(.*)=(.*)git@%s/(.*).git"%gitUrl()
