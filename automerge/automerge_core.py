@@ -173,6 +173,12 @@ def rbranch(idx):
 #     return result
 
 def validateBranchList():
+    submodules = getSubModules()
+    for i in range(len(REL_BRANCH)):
+        for submodule in submodules:
+            print getShaOfSubModule(branch(i), submodule["path"])
+
+def validateBranchLists():
     result=0
 
     for i in range(len(REL_BRANCH)) :
