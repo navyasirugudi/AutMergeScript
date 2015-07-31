@@ -438,7 +438,8 @@ def getShaOfSubModule(branch, submodule):
     tryFatal("git submodule update")
 
     tryFatal("cd %s"%submodule)
-    sha = tryFatal1("git show --format='%H'")
+    tryFatal1("git show --format='%H'")
+    sha = tryFatal1("git rev-parse HEAD")
 
     tryFatal("cd %s"%curPath)
 
