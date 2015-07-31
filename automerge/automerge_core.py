@@ -367,10 +367,10 @@ def getSubModules():
         pmatch = url.match(line)
 
         if (umatch is not None and len(umatch.groups()) == 3):
-            module["name"] = umatch.groups[2].strip()
+            module["name"] = umatch.groups()[2].strip()
 
         elif (pmatch is not None and len(pmatch.groups()) == 2):
-            module["path"] = pmatch.groups[1].strip()
+            module["path"] = pmatch.groups()[1].strip()
 
         if ("path" in module and "name" in module):
             print "Obtained subModule: %s"%module
@@ -427,10 +427,10 @@ def getRepoName():
     urlMatcher = re.compile(urlRegex)
 
     matches = urlMatcher.match(url)
-    if (matches is None):
-        return ""
+    #if (matches is None):
+     #   return ""
 
-    return matches.groups[0]
+    return matches.groups()[0]
 
 def mergeSubModules(srcbranch, target):
     submodules = getSubModules()
