@@ -44,7 +44,9 @@ def doAll(repoDir):
     commitMessages = []
 
     if repoDir:
+        print "Changing directory"
         chdir(repoDir)
+        print "updating submodule"
         tryFatal("git submodule update --init --recursive")
 
     reportSetup()
