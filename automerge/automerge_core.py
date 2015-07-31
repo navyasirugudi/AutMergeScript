@@ -57,7 +57,7 @@ def doAll(repoDir):
         errMsg = "Failed branch validation"
         log (errMsg)
         rc = 1
-
+    errMsg = "xx"
     if errMsg == "":
         for i in range(len(REL_BRANCH)) :
             br=branch(i)
