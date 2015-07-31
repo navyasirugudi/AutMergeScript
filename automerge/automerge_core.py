@@ -360,6 +360,8 @@ def getSubModules():
 
     urlregex = "url(.*)=(.*)git@%s/(.*)"%gitUrl()
     pathregex = "path(.*)=(.*)"
+    print urlregex
+    print pathregex
 
     url = re.compile(urlregex)
     path = re.compile(pathregex)
