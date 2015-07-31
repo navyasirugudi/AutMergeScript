@@ -197,10 +197,15 @@ def validateSubModulesForMerge(srcbranch, target):
     msg = ""
 
     for submodule in submodules:
+        print "Validate submodule %s:%s"%(submodule["path"], submodule["name"])
         #check submodule pointer to head of the corresponding release branch of the submodules on both src and target branches.
-
+        print "Current branch %s"%currentBranch()
         targetBrSubModuleSha = getShaOfSubModule(target, submodule["path"])
+        print "Current branch %s"%currentBranch()
+        print targetBrSubModuleSha
         srcBrSubModuleSha = getShaOfSubModule(srcbranch, submodule["path"])
+        print "Current branch %s"%currentBranch()
+        print srcBrSubModuleSha
 
         if (srcBrSubModuleSha == targetBrSubModuleSha): #merge not required
             continue
