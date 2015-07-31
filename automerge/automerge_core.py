@@ -435,7 +435,7 @@ def getShaOfSubModule(branch, submodule):
     curbranch = currentBranch()
 
     tryFatal("git checkout %s"%branch)
-    tryFatal("git submodule update")
+    tryFatal("git submodule update --init --recursive")
 
     tryFatal("cd %s"%submodule)
     tryFatal1("git show --format='%H'")
