@@ -110,12 +110,12 @@ def sh(cmd):
 
 
 def tryFatal(cmd):
-    print cmd
+    #print cmd
     output, retcode = sh(cmd)
     if retcode:
         log ("%s\n%s"%(cmd, output))
         raise subprocess.CalledProcessError(retcode, cmd, output=output)
-    print output
+    #print output
     return output
 
 # Same as tryFatal by returns only first line in the output
@@ -426,9 +426,10 @@ def getHead(branch, submodule):
     print "Getting head of subModule %s on branch %s"%(submodule, branch)
     curPath = tryFatal1("pwd")
 
+    tryFatal("git submodule update")
+
     chdir(submodule)
     tryFatal("git checkout %s"%branch)
-    tryFatal("git submodule update")
 
     sha = tryFatal1("git show --format='%H'")
 
