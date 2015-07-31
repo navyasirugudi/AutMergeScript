@@ -46,12 +46,12 @@ def doAll(repoDir):
     if repoDir:
         print "Changing directory"
         chdir(repoDir)
-        print "updating submodule"
-        tryFatal("git submodule update --init --recursive")
 
     reportSetup()
     log ("Current working directory is %s"%path.abspath(getcwd()) )
     tryFatal("git fetch")
+    print "updating submodule"
+    tryFatal("git submodule update --init --recursive")
 
     if validateBranchList() > 0:
         errMsg = "Failed branch validation"
