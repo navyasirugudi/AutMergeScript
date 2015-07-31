@@ -153,6 +153,20 @@ def rbranch(idx):
     return "remotes/origin/%s"%branch(idx)
 
 
+# def validateBranchList():
+#     result=0
+
+#     for i in range(len(REL_BRANCH)) :
+#         br=rbranch(i)
+#         sha, err = sh("git rev-parse --quiet --verify %s"%br)
+#         if err != 0 :
+#            result=result+1
+#            errMsg = "Missing branch %s"%br
+#            log (errMsg)
+#            reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
+
+#     return result
+
 def validateBranchList():
     result=0
 
@@ -164,20 +178,7 @@ def validateBranchList():
            errMsg = "Missing branch %s"%br
            log (errMsg)
            reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
-
-    return result
-
-def validateBranchList():
-    result=0
-
-    for i in range(len(REL_BRANCH)) :
-        br=rbranch(i)
-        sha, err = sh("git rev-parse --quiet --verify %s"%br)
-        if err != 0 :
-           result=result+1
-           errMsg = "Missing branch %s"%br
-           log (errMsg)
-           reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
+           continue
 
         if (i is not len(REL_BRANCH) - 1):
             err, msg = validateSubModulesForMerge(REL_BRANCH[i], REL_BRANCH[i])
