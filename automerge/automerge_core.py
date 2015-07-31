@@ -372,8 +372,8 @@ def getSubModules():
         if len(line) == 0:
             continue
 
-        umatch = path.match(line)
-        pmatch = url.match(line)
+        pmatch = path.match(line)
+        umatch = url.match(line)
 
         if (umatch is not None and len(umatch.groups()) == 3):
             module["name"] = umatch.groups()[2].strip()
