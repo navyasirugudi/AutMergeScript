@@ -316,7 +316,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
     return True
 
 def setSubModuleCommitOnSource(srcbranch, target, sha):
-    submodules = getSubModules(srcbranch)
+    submodules = getSubModules()
     curPath = tryFatal1("pwd")
     tryFatal("git checkout %s"%srcbranch)
 
@@ -427,7 +427,7 @@ def getRepoName():
     return matches.groups[0]
 
 def mergeSubModules(srcbranch, target):
-    submodules = getSubModules(srcbranch)
+    submodules = getSubModules()
     reponame = getRepoName()
 
     for submodule in submodules:
