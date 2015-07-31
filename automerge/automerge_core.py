@@ -172,13 +172,13 @@ def rbranch(idx):
 
 #     return result
 
-def validateBranchList():
-    submodules = getSubModules()
-    for i in range(len(REL_BRANCH)):
-        for submodule in submodules:
-            print getShaOfSubModule(branch(i), submodule["path"])
+# def validateBranchList():
+#     submodules = getSubModules()
+#     for i in range(len(REL_BRANCH)):
+#         for submodule in submodules:
+#             print getShaOfSubModule(branch(i), submodule["path"])
 
-def validateBranchLists():
+def validateBranchList():
     result=0
 
     for i in range(len(REL_BRANCH)) :
@@ -239,8 +239,8 @@ def validateSubModulesForMerge(srcbranch, target):
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, target.strip(), msg)
 
-        #if not autoMerge(subMSrcBrName, subMTargetBrName): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
-         #   return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
+        if not autoMerge(subMSrcBrName, subMTargetBrName): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+            return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
     return True, ""
 
@@ -392,11 +392,6 @@ def getSubModules():
         pmatch = path.match(line)
         umatch = url.match(line)
 
-        if (pmatch is None):
-            print "pmatch is none"
-        if (umatch is None):
-            print "umatch is none"
-
         if (pmatch is not None):
             print pmatch.groups()
 
@@ -420,12 +415,12 @@ def getSubModules():
 def getHead(branch, submodule):
     curPath = tryFatal1("pwd")
 
-    tryFatal("cd %s"%submodule)
+    chdir(submodule)
     tryFatal("git checkout %s"%branch)
 
     sha = tryFatal1("git show --format='%H'")
 
-    tryFatal("cd %s"%curPath)
+    chdir(curPath)
     tryFatal("git submodule update")
 
     return sha
@@ -435,18 +430,13 @@ def getShaOfSubModule(branch, submodule):
     curbranch = currentBranch()
 
     tryFatal("git checkout %s"%branch)
-    tryFatal("git submodule update --init --recursive")
+    tryFatal("git submodule update")
 
     chdir(submodule)
-    print "after cding pwd"
-    tryFatal("pwd")
 
-    tryFatal1("git show --format='%H'")
-    sha = tryFatal1("git rev-parse HEAD")
+    sha = tryFatal1("git show --format='%H'")
 
     chdir(curPath)
-    print "after cding back pwd"
-    tryFatal("pwd")
 
     tryFatal("git checkout %s"%curbranch)
     tryFatal("git submodule update")
