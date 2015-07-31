@@ -423,7 +423,7 @@ def getRepoLink():
 def getRepoName():
     url = tryFatal1("git config remote.origin.url")
     urlRegex = getRepoLink()
-    urlMatcher = urlRegex.Compile()
+    urlMatcher = re.compile(urlRegex)
 
     matches = urlMatcher.match(url)
     return matches.groups[0]
