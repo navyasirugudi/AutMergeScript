@@ -207,7 +207,10 @@ def validateBranchList():
     return result
 
 def validateSubModulesForMerge(srcbranch, target):
-    print "Validating submodules for merge between %s and %s"%(srcbranch, target)
+    print "Validating submodules for merge between"
+    print srcbranch
+    print target
+    #print "Validating submodules for merge between %s and %s"%(srcbranch, target)
     submodules = getSubModules()
     reponame = getRepoName()
     msg = ""
