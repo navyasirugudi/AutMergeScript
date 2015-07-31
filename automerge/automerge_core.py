@@ -366,13 +366,14 @@ def getSubModules():
         umatch = path.match(line)
         pmatch = url.match(line)
 
-        if (len(umatch.groups()) == 3):
+        if (umatch is not None and len(umatch.groups()) == 3):
             module["name"] = umatch.groups[2].strip()
 
-        elif (len(pmatch.groups()) == 2):
+        elif (pmatch is not None and len(pmatch.groups()) == 2):
             module["path"] = pmatch.groups[1].strip()
 
         if ("path" in module and "name" in module):
+            print "Obtained subModule: %s"%module
             modules.append(module)
             module = {}
 
