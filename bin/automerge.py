@@ -54,6 +54,7 @@ def main():
     os.chdir(toolsDir+"/tmp")
     automerge_core.tryFatal("rm -rf "+REPO_DIR)
     automerge_core.tryFatal("git clone %s %s"%(REPO, REPO_DIR))
+    automerge_core.tryFatal("git submodule update --init --recursive")
     automerge_core.loadBranches("config/release-branches.json")
     return automerge_core.doAll(REPO_DIR)
 

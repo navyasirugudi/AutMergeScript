@@ -181,12 +181,12 @@ def validateBranchList():
            continue
 
         #if err is 0 check submodules
-        if (i is not len(REL_BRANCH) - 1):
-            err, msg = validateSubModulesForMerge(REL_BRANCH[i], REL_BRANCH[i])
+        if (i > 0):
+            err, msg = validateSubModulesForMerge(branch(i-1), branch(i))
             if not err:
                result=result+1
                log (msg)
-               reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), msg)
+               reportMergeFailure(AutoMergeErrors.ValidateBranchError, branch(i).strip(), msg)
 
     return result
 
