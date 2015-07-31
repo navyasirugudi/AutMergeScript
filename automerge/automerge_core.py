@@ -351,10 +351,10 @@ def setSubModuleCommitOnSource(srcbranch, target, sha):
 
         if (srcBrSubModuleSha != targetBrSubModuleSha):
 
-            tryFatal("cd %s"%submodulePath)
+            chdir(submodulePath)
             tryFatal("git pull")
             tryFatal("git checkout %s"%targetBrSubModuleSha)
-            tryFatal("cd %s"%curPath)
+            chdir(curPath)
 
     tryFatal("git commit -a -m \"submodules level commit\"")
 
@@ -478,9 +478,9 @@ def mergeSubModules(srcbranch, target):
         if (srcBrSubModuleSha == targetBrSubModuleSha): #merge not required
             continue
 
-        tryFatal("cd %s"%submodule["path"])
+        chdir(submodule["path"])
 
-        if not autoMerge(subMSrcBrName, subMTargetBrName): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+        if not autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
             return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
     return True, ""
