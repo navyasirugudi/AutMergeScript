@@ -486,7 +486,10 @@ def mergeSubModules(srcbranch, target):
     return True, ""
 
 def branchExists(branchName):
+    tryFatal("pwd")
+    print "verifying branch %s"%branchName
     sha, err = sh("git rev-parse --quiet --verify %s"%branchName)
+    print err
     return err == 0
 
 def subMbranchExists(submodulePath, branchName):
