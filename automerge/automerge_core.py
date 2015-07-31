@@ -178,7 +178,7 @@ def validateBranchList():
            log (errMsg)
            reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
 
-        if (i is not len(REL_BRANCH) - 1)
+        if (i is not len(REL_BRANCH) - 1):
             err, msg = validateSubModulesForMerge(rbranch[i], rbranch[i + 1])
             if err != 0:
                result=result+1
