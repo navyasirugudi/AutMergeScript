@@ -358,8 +358,8 @@ def getSubModules():
     gitmfile = open(".gitmodules", "r")
     modules = []
 
-    urlregex = "url(.*)=(.*)git@%s/(.*)"%gitUrl()
-    pathregex = "path(.*)=(.*)"
+    urlregex = "(.*)url(.*)=(.*)git@%s/(.*)"%gitUrl()
+    pathregex = "(.*)path(.*)=(.*)"
     print urlregex
     print pathregex
 
@@ -386,11 +386,11 @@ def getSubModules():
         if (umatch is not None):
             print umatch.groups()
 
-        if (umatch is not None and len(umatch.groups()) == 3):
-            module["name"] = umatch.groups()[2].strip()
+        if (umatch is not None and len(umatch.groups()) == 4):
+            module["name"] = umatch.groups()[3].strip()
 
-        elif (pmatch is not None and len(pmatch.groups()) == 2):
-            module["path"] = pmatch.groups()[1].strip()
+        elif (pmatch is not None and len(pmatch.groups()) == 3):
+            module["path"] = pmatch.groups()[2].strip()
 
         if ("path" in module and "name" in module):
             print "Obtained subModule: %s"%module
