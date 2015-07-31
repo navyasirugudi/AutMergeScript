@@ -487,13 +487,13 @@ def mergeSubModules(srcbranch, target):
 
 def branchExists(branchName):
     sha, err = sh("git rev-parse --quiet --verify %s"%branchName)
-    return err != 0
+    return err == 0
 
 def subMbranchExists(submodulePath, branchName):
     currPwd = tryFatal("pwd")
-    tryFatal("cd %s"%submodulePath)
+    chdir(submodulePath)
     exists = branchExists(branchName)
-    tryFatal("cd %s"%currPwd)
+    chdir(currPwd)
 
     return exists
 
