@@ -241,7 +241,7 @@ def validateSubModule(reponame, repoBranch, submodule, submSha):
     if (not brExists):
         return False, "Expected branch %s doesn't exist for the submodule: %s"%(submBrName, submodule["name"])
 
-    if submSha is not getHead(submBrName, subModule["path"]):
+    if submSha is not getHead(submBrName, submodule["path"]):
         return False, "%s's submodule \"%s\" is not pointing to the head of submodule's release branch %s"%(reponame, submodule["name"], submBrName)
 
     return True, ""
