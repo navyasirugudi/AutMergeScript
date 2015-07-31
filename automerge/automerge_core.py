@@ -211,7 +211,7 @@ def validateSubModulesForMerge(srcbranch, target):
     submodules = getSubModules()
     reponame = getRepoName()
     msg = ""
-    #allok = True
+    allok = True
 
     for submodule in submodules:
         print "Validate submodule %s:%s"%(submodule["path"], submodule["name"])
@@ -229,21 +229,21 @@ def validateSubModulesForMerge(srcbranch, target):
         srcOk, msg = validateSubModule(reponame, srcbranch, submodule, srcBrSubModuleSha)
 
         if (not srcOk):
-            #allok = False
+            allok = False
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(srcbranch.strip(),submodule["path"]), msg)
 
         targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
 
         if (not targetOk):
-            #allok = False
+            allok = False
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(target.strip(),submodule["path"]), msg)
 
         #if not autoMerge(subMSrcBrName, subMTargetBrName): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
          #   return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
-    #return allok
+    return allok
 
 def validateSubModule(reponame, repoBranch, submodule, submSha):
     submBrName = getNamingConvention(reponame, repoBranch)
