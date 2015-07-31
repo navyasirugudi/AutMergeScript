@@ -493,7 +493,7 @@ def branchExists(branchName):
     return err == 0
 
 def subMbranchExists(submodulePath, branchName):
-    currPwd = tryFatal("pwd")
+    currPwd = tryFatal1("pwd")
     chdir(submodulePath)
     exists = branchExists(branchName)
     chdir(currPwd)
