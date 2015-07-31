@@ -216,13 +216,12 @@ def validateSubModulesForMerge(srcbranch, target):
     for submodule in submodules:
         print "Validate submodule %s:%s"%(submodule["path"], submodule["name"])
         #check submodule pointer to head of the corresponding release branch of the submodules on both src and target branches.
-        print "Current branch %s"%currentBranch()
         targetBrSubModuleSha = getShaOfSubModule(target, submodule["path"])
-        print "Current branch %s"%currentBranch()
-        print targetBrSubModuleSha
+        #print "Current branch %s"%currentBranch()
+        #print targetBrSubModuleSha
         srcBrSubModuleSha = getShaOfSubModule(srcbranch, submodule["path"])
-        print "Current branch %s"%currentBranch()
-        print srcBrSubModuleSha
+        #print "Current branch %s"%currentBranch()
+        #print srcBrSubModuleSha
 
         if (srcBrSubModuleSha == targetBrSubModuleSha): #merge not required
             continue
@@ -237,7 +236,7 @@ def validateSubModulesForMerge(srcbranch, target):
 
         if (not targetOk):
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, target.strip(), msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(target.strip(),submodule["path"]), msg)
 
         #if not autoMerge(subMSrcBrName, subMTargetBrName): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
          #   return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
