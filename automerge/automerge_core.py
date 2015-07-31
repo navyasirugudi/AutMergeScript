@@ -45,6 +45,7 @@ def doAll(repoDir):
 
     if repoDir:
         chdir(repoDir)
+        tryFatal("git submodule update --init --recursive")
 
     reportSetup()
     log ("Current working directory is %s"%path.abspath(getcwd()) )
