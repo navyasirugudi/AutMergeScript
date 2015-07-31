@@ -428,6 +428,7 @@ def getHead(branch, submodule):
 
     chdir(submodule)
     tryFatal("git checkout %s"%branch)
+    tryFatal("git submodule update")
 
     sha = tryFatal1("git show --format='%H'")
 
