@@ -114,6 +114,7 @@ def tryFatal(cmd):
     if retcode:
         log ("%s\n%s"%(cmd, output))
         raise subprocess.CalledProcessError(retcode, cmd, output=output)
+    print output
     return output
 
 # Same as tryFatal by returns only first line in the output
