@@ -198,11 +198,9 @@ def validateBranchList():
         branch2 = rbranch(i)
 
         if (branchExists(rbranch(i - 1)) and branchExists(rbranch(i))):
-            validateSubModulesForMerge(branch(i - 1), branch(i))
-            # if not err:
-            #    result=result+1
-            #    log (msg)
-            #    reportMergeFailure(AutoMergeErrors.ValidateBranchError, branch(i - 1).strip(), msg)
+            ok = validateSubModulesForMerge(branch(i - 1), branch(i))
+            if not ok:
+               result=result+1
 
     return result
 
