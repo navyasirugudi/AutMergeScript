@@ -236,7 +236,7 @@ def validateSubModulesForMerge(srcbranch, target):
 def validateSubModule(reponame, repoBranch, submodule, submSha):
     submBrName = getNamingConvention(reponame, repoBranch)
 
-    brExists = branchExists(submodule["path"], submBrName)
+    brExists = subMbranchExists(submodule["path"], submBrName)
 
     if (not brExists):
         return False, "Expected branch %s doesn't exist for the submodule: %s"%(submBrName, submodule["name"])
@@ -478,11 +478,16 @@ def mergeSubModules(srcbranch, target):
 
     return True, ""
 
-def branchExists(submodulePath, branchName):
-    tryFatal("cd %s"%submodulePath)
-    sha, err = sh("git rev-parse --quiet --verify %s"%br)
-
+def branchExists(branchName):
+    sha, err = sh("git rev-parse --quiet --verify %s"%branchName)
     return err != 0
+
+def subMbranchExists(submodulePath, branchName):
+    tryFatal("cd %s"%submodulePath)
+    exists = branchExists(branchName)
+    tryFatal("cd -")
+
+    return exists
 
 # Push data to origin. In case of failure, attempt to pull latest version and retry up to 5 times
 def pushChanges(old) :
