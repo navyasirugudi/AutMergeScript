@@ -196,11 +196,11 @@ def validateBranchList():
         if (i == 0):
             continue
 
-        branch1 = rbranch(i-1)
-        branch2 = rbranch(i)
+        branch1 = branch(i-1)
+        branch2 = branch(i)
 
-        if (branchExists(rbranch(i - 1)) and branchExists(rbranch(i))):
-            ok = validateSubModulesForMerge(branch(i - 1), branch(i))
+        if (branchExists(branch1) and branchExists(branch1)):
+            ok = validateSubModulesForMerge(branch1, branch2)
             if not ok:
                result=result+1
 
