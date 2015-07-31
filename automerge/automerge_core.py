@@ -438,10 +438,15 @@ def getShaOfSubModule(branch, submodule):
     tryFatal("git submodule update --init --recursive")
 
     tryFatal("cd %s"%submodule)
+    print "after cding pwd"
+    tryFatal("pwd")
+
     tryFatal1("git show --format='%H'")
     sha = tryFatal1("git rev-parse HEAD")
 
     tryFatal("cd %s"%curPath)
+    print "after cding back pwd"
+    tryFatal("pwd")
 
     tryFatal("git checkout %s"%curbranch)
     tryFatal("git submodule update")
