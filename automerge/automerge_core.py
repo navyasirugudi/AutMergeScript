@@ -188,7 +188,7 @@ def validateBranchList():
     return result
 
 def validateSubModulesForMerge(srcbranch, target):
-    submodules = getSubModules(srcbranch)
+    submodules = getSubModules()
     reponame = getRepoName()
     good = True
     msg = ""
