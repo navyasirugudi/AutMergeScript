@@ -183,7 +183,7 @@ def validateBranchList():
         #if err is 0 check submodules
         if (i is not len(REL_BRANCH) - 1):
             err, msg = validateSubModulesForMerge(REL_BRANCH[i], REL_BRANCH[i])
-            if err != 0:
+            if not err:
                result=result+1
                log (msg)
                reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), msg)
@@ -191,9 +191,9 @@ def validateBranchList():
     return result
 
 def validateSubModulesForMerge(srcbranch, target):
+    print "Validating submodules for merge between %s and %s"%(srcbranch, target)
     submodules = getSubModules()
     reponame = getRepoName()
-    good = True
     msg = ""
 
     for submodule in submodules:
