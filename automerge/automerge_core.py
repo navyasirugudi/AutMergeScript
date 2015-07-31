@@ -180,12 +180,13 @@ def validateBranchList():
            reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
            continue
 
+        #if err is 0 check submodules
         if (i is not len(REL_BRANCH) - 1):
             err, msg = validateSubModulesForMerge(REL_BRANCH[i], REL_BRANCH[i])
             if err != 0:
                result=result+1
                log (msg)
-               reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
+               reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), msg)
 
     return result
 
