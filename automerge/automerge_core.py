@@ -97,6 +97,7 @@ def reportAutoMergeResults():
 
 
 def sh(cmd):
+    print cmd
     if verbose:
         print cmd
 
@@ -104,6 +105,7 @@ def sh(cmd):
     output, err = proc.communicate()
     if verbose:
         print output
+    print output
     return (output, proc.poll())
 
 
