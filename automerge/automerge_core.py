@@ -50,14 +50,13 @@ def doAll(repoDir):
     reportSetup()
     log ("Current working directory is %s"%path.abspath(getcwd()) )
     tryFatal("git fetch")
-    print "updating submodule"
     tryFatal("git submodule update --init --recursive")
 
     if validateBranchList() > 0:
         errMsg = "Failed branch validation"
         log (errMsg)
         rc = 1
-    errMsg = "xx"
+
     if errMsg == "":
         for i in range(len(REL_BRANCH)) :
             br=branch(i)
@@ -199,11 +198,11 @@ def validateBranchList():
         branch2 = rbranch(i)
 
         if (branchExists(rbranch(i - 1)) and branchExists(rbranch(i))):
-            err, msg = validateSubModulesForMerge(branch(i - 1), branch(i))
-            if not err:
-               result=result+1
-               log (msg)
-               reportMergeFailure(AutoMergeErrors.ValidateBranchError, branch(i).strip(), msg)
+            validateSubModulesForMerge(branch(i - 1), branch(i))
+            # if not err:
+            #    result=result+1
+            #    log (msg)
+            #    reportMergeFailure(AutoMergeErrors.ValidateBranchError, branch(i - 1).strip(), msg)
 
     return result
 
@@ -212,6 +211,7 @@ def validateSubModulesForMerge(srcbranch, target):
     submodules = getSubModules()
     reponame = getRepoName()
     msg = ""
+    #allok = True
 
     for submodule in submodules:
         print "Validate submodule %s:%s"%(submodule["path"], submodule["name"])
@@ -229,19 +229,21 @@ def validateSubModulesForMerge(srcbranch, target):
         srcOk, msg = validateSubModule(reponame, srcbranch, submodule, srcBrSubModuleSha)
 
         if (not srcOk):
+            #allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch.strip(), msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(srcbranch.strip(),submodule["path"]), msg)
 
         targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
 
         if (not targetOk):
+            #allok = False
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(target.strip(),submodule["path"]), msg)
 
         #if not autoMerge(subMSrcBrName, subMTargetBrName): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
          #   return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
-    return True, ""
+    #return allok
 
 def validateSubModule(reponame, repoBranch, submodule, submSha):
     submBrName = getNamingConvention(reponame, repoBranch)
