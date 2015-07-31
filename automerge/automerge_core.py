@@ -181,8 +181,14 @@ def validateBranchList():
            continue
 
         #if err is 0 check submodules
-        if (i > 0):
-            err, msg = validateSubModulesForMerge(branch(i-1), branch(i))
+        if (i == 0):
+            continue
+
+        branch1 = branch(i-1)
+        branch2 = branch(i)
+
+        if (branchExists(branch1) and branchExists(branch2)):
+            err, msg = validateSubModulesForMerge(branch1, branch2)
             if not err:
                result=result+1
                log (msg)
