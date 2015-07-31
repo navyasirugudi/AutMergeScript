@@ -226,7 +226,7 @@ def validateSubModulesForMerge(srcbranch, target):
         #print "Current branch %s"%currentBranch()
         print "srcBrSubModuleSha = %s"%srcBrSubModuleSha
 
-        if (srcBrSubModuleSha is targetBrSubModuleSha): #merge not required
+        if (srcBrSubModuleSha == targetBrSubModuleSha): #merge not required
             print("src and target has same subModule sha %s"%srcBrSubModuleSha)
             continue
 
@@ -258,7 +258,7 @@ def validateSubModule(reponame, repoBranch, submodule, submSha):
     if (not brExists):
         return False, "Expected branch %s doesn't exist for the submodule: %s"%(submBrName, submodule["name"])
 
-    if submSha is not getHead(submBrName, submodule["path"]):
+    if submSha != getHead(submBrName, submodule["path"]):
         return False, "%s's submodule \"%s\" on %s is not pointing to the head of submodule's release branch %s"%(reponame, submodule["name"], repoBranch, submBrName)
 
     print "returning well for %s on subModule %s for branch %s"%(reponame, submodule["path"], repoBranch)
