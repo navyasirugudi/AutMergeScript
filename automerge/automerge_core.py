@@ -422,10 +422,14 @@ def getRepoLink():
 
 def getRepoName():
     url = tryFatal1("git config remote.origin.url")
+    print "obtained url for repo name: %s"%url
     urlRegex = getRepoLink()
     urlMatcher = re.compile(urlRegex)
 
     matches = urlMatcher.match(url)
+    if (matches is None):
+        return ""
+
     return matches.groups[0]
 
 def mergeSubModules(srcbranch, target):
