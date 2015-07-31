@@ -109,6 +109,7 @@ def sh(cmd):
 
 
 def tryFatal(cmd):
+    print cmd
     output, retcode = sh(cmd)
     if retcode:
         log ("%s\n%s"%(cmd, output))
