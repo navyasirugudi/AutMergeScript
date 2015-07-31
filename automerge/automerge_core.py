@@ -439,6 +439,7 @@ def getHead(branch, submodule):
     return sha
 
 def getShaOfSubModule(branch, submodule):
+    print "get sha of subModule %s on branch %s"%(submodule, branch)
     curPath = tryFatal1("pwd")
     curbranch = currentBranch()
 
@@ -451,6 +452,7 @@ def getShaOfSubModule(branch, submodule):
 
     chdir(curPath)
 
+    print "putting branch back to %s"%curbranch
     tryFatal("git checkout %s"%curbranch)
     tryFatal("git submodule update")
 
