@@ -597,7 +597,7 @@ def autoMerge(old, new):
 
     # Following commands should not normally fail.
     tryFatal("git checkout %s"%old)
-    tryFatal("git pull origin %s"old)
+    tryFatal("git pull origin %s"%old)
     tryFatal("git checkout %s"%new)
     tryFatal("git pull origin %s"%new)
 
