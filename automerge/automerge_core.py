@@ -52,26 +52,25 @@ def doAll(repoDir):
     tryFatal("git fetch")
     tryFatal("git submodule update --init --recursive")
 
-    if validateBranchList() > 0:
-        errMsg = "Failed branch validation"
-        log (errMsg)
-        rc = 1
+    for i in range(len(REL_BRANCH)) :
+        br=branch(i)
+        if br == 'master':
+            rc = 0
+            break # We reached end of list
 
-    if errMsg == "":
-        for i in range(len(REL_BRANCH)) :
-            br=branch(i)
-            if br == 'master':
-                rc = 0
-                break # We reached end of list
+        next=branch(i+1)
 
-            next=branch(i+1)
+        if validateBranchList(br, next) > 0:
+            errMsg = "Failed branch validation"
+            log(errMsg)
+            rc = 1
 
-            if not checkMerged (br,next) :
-                if not autoMerge(br, next):
-                    errMsg = "Unable to finish automerge. Everything must be reported by now."
-                    log (errMsg)
-                    rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
-                    break
+        if not checkMerged (br,next) :
+            if not autoMerge(br, next):
+                errMsg = "Unable to finish automerge. Everything must be reported by now."
+                log (errMsg)
+                rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
+                break
 
     reportAutoMergeResults()
     return rc, errMsg
@@ -199,10 +198,28 @@ def validateBranchList():
         branch1 = branch(i-1)
         branch2 = branch(i)
 
-        if (branchExists(branch1) and branchExists(branch1)):
+        if (branchExists(branch1) and branchExists(branch2)):
             ok = validateSubModulesForMerge(branch1, branch2)
             if not ok:
                result=result+1
+
+    return result
+
+def validateBranchList(src, target):
+    result=0
+
+    for br in [src, target]:
+        if not branchExists(br):
+            result=result+1
+            errMsg = "Missing branch %s"%br
+            log (errMsg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, br.strip(), errMsg)
+            continue
+
+    if (result == 0):
+        ok = validateSubModulesForMerge(src, target)
+        if not ok:
+           result=result+1
 
     return result
 
@@ -244,12 +261,11 @@ def validateSubModulesForMerge(srcbranch, target):
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(target.strip(),submodule["path"]), msg)
 
-        chdir(submodule["path"])
-        currentPath = tryFatal1("pwd")
-        if not autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
-            chdir(currentPath)
-            return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
-
+        #chdir(submodule["path"])
+        #currentPath = tryFatal1("pwd")
+        #if not autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+         #   return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
+        #chdir(currentPath)
     return allok
 
 def validateSubModule(reponame, repoBranch, submodule, submSha):
