@@ -222,7 +222,7 @@ def validateBranchList(src, target):
             result=result+1
             errMsg = "Missing branch %s"%br
             log (errMsg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, br.strip(), errMsg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, src, target, errMsg)
             continue
 
     if (result == 0):
@@ -261,14 +261,14 @@ def validateSubModulesForMerge(srcbranch, target):
         if (not srcOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(srcbranch.strip(),submodule["path"]), msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"]), msg))
 
         targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
 
         if (not targetOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(target.strip(),submodule["path"]), msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"]), msg))
 
         #chdir(submodule["path"])
         #currentPath = tryFatal1("pwd")
