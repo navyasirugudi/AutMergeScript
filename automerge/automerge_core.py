@@ -372,7 +372,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
     return True
 
 def setSubModuleCommitOnSource(srcSha, target):
-    print "Setting submodule commit on source: srcbranch(%s), target(%s), sha(%s)"%(srcbranch, target, sha)
+    print "Setting submodule commit on source: srcSha(%s), target(%s)"%(srcSha, target)
     submodules = getSubModules()
     curPath = tryFatal1("pwd")
     tryFatal("git checkout %s"%srcbranch)
