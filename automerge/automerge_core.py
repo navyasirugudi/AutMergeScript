@@ -340,7 +340,7 @@ def doMerge(branch):
             else:
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
 
-                setSubModuleCommitOnSource(branch, target, sha) #this is for not producing any conflicts during the automerge of the parent branches
+                #setSubModuleCommitOnSource(branch, target, sha) #this is for not producing any conflicts during the automerge of the parent branches
 
                 mergeResult, err=sh("git merge --no-ff -m %s"%(lCommitMsg))
                 if  err != 0:
