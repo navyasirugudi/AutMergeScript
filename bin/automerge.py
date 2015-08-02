@@ -83,13 +83,13 @@ def reportMergeFailureLog(*args):
         failure=ET.SubElement(testCase, "failure", message="error")
         failure.text=args[3]
     elif args[0] == automerge_core.AutoMergeErrors.ValidateBranchError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s: ValidateBranch %s"%(args[1], args[2], args[3]))
+        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s: ValidateBranchError"%(args[1], args[2]))
         failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[2]
+        failure.text=args[3]
     elif args[0] == automerge_core.AutoMergeErrors.PushValidationError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s: PushBranchValidation %s"%(args[1], args[2], args[3]))
+        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s: PushBranchValidationError"%(args[1], args[2]))
         failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[2]
+        failure.text=args[3]
 
 def reportMergeSuccessLog(*args):
     # GUS and PR goes here
