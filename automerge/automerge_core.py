@@ -354,6 +354,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
     return True
 
 def setSubModuleCommitOnSource(srcbranch, target, sha):
+    print "Setting submodule commit on source: srcbranch(%s), target(%s), sha(%s)"%(srcbranch, target, sha)
     submodules = getSubModules()
     curPath = tryFatal1("pwd")
     tryFatal("git checkout %s"%srcbranch)
@@ -495,8 +496,10 @@ def getRepoName():
     return name.replace('.git','')
 
 def mergeSubModules(srcbranch, target):
+
     submodules = getSubModules()
     reponame = getRepoName()
+    print "Merging submodules for %s. Length of submodules: %s"%(reponame, len(submodules))
 
     for submodule in submodules:
         #check submodule pointer to head of the corresponding release branch of the submodules on both src and target branches.
