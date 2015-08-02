@@ -340,7 +340,7 @@ def doMerge(branch):
             else:
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
 
-                #setSubModuleCommitOnSource(branch, target, sha) #this is for not producing any conflicts during the automerge of the parent branches
+                setSubModuleCommitOnSource(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
 
                 mergeResult, err=sh("git merge --no-ff -m %s"%(lCommitMsg))
                 if  err != 0:
@@ -371,7 +371,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
 
     return True
 
-def setSubModuleCommitOnSource(srcbranch, target, sha):
+def setSubModuleCommitOnSource(srcSha, target):
     print "Setting submodule commit on source: srcbranch(%s), target(%s), sha(%s)"%(srcbranch, target, sha)
     submodules = getSubModules()
     curPath = tryFatal1("pwd")
@@ -379,11 +379,11 @@ def setSubModuleCommitOnSource(srcbranch, target, sha):
 
     for submodule in submodules:
         submodulePath = submodule["path"]
-        srcBrSubModuleSha = getShaOfSubModule(sha, submodulePath)
+        srcBrSubModuleSha = getShaOfSubModule(srcSha, submodulePath)
         targetBrSubModuleSha = getShaOfSubModule(target, submodulePath)
 
         if (srcBrSubModuleSha != targetBrSubModuleSha):
-
+            print "sha is different for src and target"
             chdir(submodulePath)
             tryFatal("git checkout %s"%targetBrSubModuleSha)
             chdir(curPath)
@@ -467,7 +467,7 @@ def getShaOfSubModule(branch, submodule):
     curPath = tryFatal1("pwd")
     curbranch = currentBranch()
 
-    tryFatal("git pull origin %s"%branch)
+    #tryFatal("git pull origin %s"%branch)
     tryFatal("git checkout %s"%branch)
     tryFatal("git submodule update")
 
