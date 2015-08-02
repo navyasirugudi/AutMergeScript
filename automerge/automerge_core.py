@@ -261,14 +261,14 @@ def validateSubModulesForMerge(srcbranch, target):
         if (not srcOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"], msg))
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, msg)
 
         targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
 
         if (not targetOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"], msg))
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, msg)
 
         #chdir(submodule["path"])
         #currentPath = tryFatal1("pwd")
@@ -284,7 +284,7 @@ def validateSubModule(reponame, repoBranch, submodule, submSha):
     brExists = subMbranchExists(submodule["path"], submBrName)
 
     if (not brExists):
-        return False, "Expected branch %s doesn't exist for the submodule: %s"%(submBrName, submodule["name"])
+        return False, "Expected branch %s doesn't exist for the submodule: %s in path: %s"%(submBrName, submodule["name"], submodule["path"])
 
     headOfBranch = getHead(submBrName, submodule["path"])
     print "submSha: %s, headOfBranch: %s"%(submSha, headOfBranch)
