@@ -471,17 +471,17 @@ def getRepoLink():
     #return "https://git.soma.salesforce.com/insights/(.*).git"
     return "https://github.com/navyasirugudi/(.*)"
 
-def getRepoName():
-    url = tryFatal1("git config remote.origin.url")
-    print "obtained url for repo name: %s"%url
-    urlRegex = getRepoLink()
-    urlMatcher = re.compile(urlRegex)
+# def getRepoName():
+#     url = tryFatal1("git config remote.origin.url")
+#     print "obtained url for repo name: %s"%url
+#     urlRegex = getRepoLink()
+#     urlMatcher = re.compile(urlRegex)
 
-    matches = urlMatcher.match(url)
-    #if (matches is None):
-     #   return ""
+#     matches = urlMatcher.match(url)
+#     #if (matches is None):
+#      #   return ""
 
-    return matches.groups()[0].replace('.git','')
+#     return matches.groups()[0].replace('.git','')
 
 def getRepoName():
     name = tryFatal1("basename $(git remote show -n origin | grep Fetch | cut -d: -f2-)")
@@ -526,6 +526,7 @@ def subMbranchExists(submodulePath, branchName):
 
 # Push data to origin. In case of failure, attempt to pull latest version and retry up to 5 times
 def pushChanges(old) :
+    print "Merge done trying to push changes"
     if not beforePushTestHook is None:
         beforePushTestHook()
 
@@ -542,6 +543,7 @@ def pushChanges(old) :
                 return False
 
         #pushResult,err =sh("git push")
+        print "git push"
         err = 0
         if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
