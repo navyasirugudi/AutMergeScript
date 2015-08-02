@@ -529,7 +529,7 @@ def mergeSubModules(srcbranch, target):
 
         chdir(submodule["path"])
 
-        merged = autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+        merged = autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)) #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
 
         chdir(currentPath)
 
