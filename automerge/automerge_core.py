@@ -469,7 +469,7 @@ def getNamingConvention(reponame, branch):
 
 def getRepoLink():
     #return "https://git.soma.salesforce.com/insights/(.*).git"
-    return "https://github.com/navyasirugudi/(.*).git"
+    return "https://github.com/navyasirugudi/(.*)(.git)?"
 
 def getRepoName():
     url = tryFatal1("git config remote.origin.url")
