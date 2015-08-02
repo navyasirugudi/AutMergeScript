@@ -385,7 +385,6 @@ def setSubModuleCommitOnSource(srcbranch, target, sha):
         if (srcBrSubModuleSha != targetBrSubModuleSha):
 
             chdir(submodulePath)
-            tryFatal("git pull")
             tryFatal("git checkout %s"%targetBrSubModuleSha)
             chdir(curPath)
 
@@ -468,6 +467,7 @@ def getShaOfSubModule(branch, submodule):
     curPath = tryFatal1("pwd")
     curbranch = currentBranch()
 
+    tryFatal("git pull origin %s"%branch)
     tryFatal("git checkout %s"%branch)
     tryFatal("git submodule update")
 
