@@ -261,7 +261,7 @@ def validateSubModulesForMerge(srcbranch, target):
         if (not srcOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"]), msg))
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"], msg))
 
         targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
 
@@ -577,7 +577,7 @@ def pushChanges(old) :
             if not beforePushValidateHook():
                 errMsg = "Validation before push in %s failed"%cb
                 log (errMsg)
-                reportMergeFailure(AutoMergeErrors.PushValidationError,cb, errMsg)
+                reportMergeFailure(AutoMergeErrors.PushValidationError, old, cb, errMsg)
                 return False
 
         #pushResult,err =sh("git push")

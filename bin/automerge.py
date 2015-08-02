@@ -87,7 +87,7 @@ def reportMergeFailureLog(*args):
         failure=ET.SubElement(testCase, "failure", message="error")
         failure.text=args[2]
     elif args[0] == automerge_core.AutoMergeErrors.PushValidationError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="PushBranchValidation %s"%(args[1]))
+        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s: PushBranchValidation %s"%(args[1], args[2], args[3]))
         failure=ET.SubElement(testCase, "failure", message="error")
         failure.text=args[2]
 
