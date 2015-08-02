@@ -306,7 +306,10 @@ def doMerge(branch):
     revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%(target,branch)))
     log ("Merge commits: %s"%revList)
 
-    mergeSubModules(branch, target)
+    merged, msg = mergeSubModules(branch, target)
+    if not merged: #reporting would have been already done
+        return False
+
     # Walk throuh the list in reverse order
     for idx in reversed(range(len(revList))) :
         s=revList[idx]
@@ -365,7 +368,6 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
         log(message)
         reportMergeFailure(AutoMergeErrors.MergeError,branch, target, message)
         return False
-
 
     return True
 
@@ -513,6 +515,7 @@ def mergeSubModules(srcbranch, target):
 
     submodules = getSubModules()
     reponame = getRepoName()
+    currentPath = tryFatal1("pwd")
     print "Merging submodules for %s. Length of submodules: %s"%(reponame, len(submodules))
 
     for submodule in submodules:
@@ -526,7 +529,11 @@ def mergeSubModules(srcbranch, target):
 
         chdir(submodule["path"])
 
-        if not autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+        merged = autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+
+        chdir(currentPath)
+
+        if not merged:
             return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
     return True, ""
