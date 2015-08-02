@@ -370,6 +370,10 @@ def setSubModuleCommitOnSource(srcbranch, target, sha):
             tryFatal("git checkout %s"%targetBrSubModuleSha)
             chdir(curPath)
 
+    output, retcode = sh("git diff --exit-code")
+    if retcode == 0:
+        return
+
     tryFatal("git commit -a -m \"submodules level commit\"")
 
     #go back to original branch
