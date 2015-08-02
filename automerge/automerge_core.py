@@ -483,6 +483,12 @@ def getRepoName():
 
     return matches.groups()[0].replace('.git','')
 
+def getRepoName():
+    name = tryFatal1("basename $(git remote show -n origin | grep Fetch | cut -d: -f2-)")
+    print "obtained name for repo name: %s"%name
+
+    return name.replace('.git','')
+
 def mergeSubModules(srcbranch, target):
     submodules = getSubModules()
     reponame = getRepoName()
