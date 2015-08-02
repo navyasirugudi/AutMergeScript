@@ -17,7 +17,7 @@ REPO_DIR="Integration"
 
 if os.environ.get("REPO","") != "":
     REPO=os.environ["REPO"]
-    
+
 if os.environ.get("REPO_DIR","") != "":
     REPO_DIR=os.environ["REPO_DIR"]
 
@@ -48,6 +48,7 @@ def main():
         automerge_core.verbose = True
 
     automerge_core.reportMergeFailureFunc=reportMergeFailureLog
+    automerge_core.reportMergeSuccessFunc=reportMergeSuccessLog
     automerge_core.reportSetupFunc=MergeJenkinsSetup
     automerge_core.reportAutoMergeResultsFunc=writeTestXml
     mkdir_p(toolsDir+"/tmp")
@@ -74,7 +75,7 @@ def MergeJenkinsSetup():
 
 def reportMergeFailureLog(*args):
     # GUS and PR goes here
-    #log (args)    
+    #log (args)
     testSuite.attrib["failures"] = str(int(testSuite.attrib["failures"]) + 1)
     testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
     if args[0] == automerge_core.AutoMergeErrors.MergeError:
@@ -84,18 +85,27 @@ def reportMergeFailureLog(*args):
     elif args[0] == automerge_core.AutoMergeErrors.ValidateBranchError:
         testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="ValidateBranch%s"%(args[1]))
         failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[2]            
+        failure.text=args[2]
     elif args[0] == automerge_core.AutoMergeErrors.PushValidationError:
         testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="PushBranchValidation%s"%(args[1]))
         failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[2]   
+        failure.text=args[2]
+
+def reportMergeSuccessLog(*args):
+    # GUS and PR goes here
+    #log (args)
+    testSuite.attrib["pass"] = str(int(testSuite.attrib["pass"]) + 1)
+    testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
+
+    testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge%sTo%s"%(args[1],args[2]))
+    failure=ET.SubElement(testCase, "pass", message="")
 
 
 def writeTestXml():
     testFile=os.getcwd() + "/AutoMergeResults_tests.xml"
     print "writing test xml file in dir: %s" % testFile
     tree=ET.ElementTree(testSuite)
-    tree.write(testFile)    
+    tree.write(testFile)
 
 
 def mkdir_p(path):

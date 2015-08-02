@@ -72,6 +72,8 @@ def doAll(repoDir):
                 log (errMsg)
                 rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
                 break
+            else:
+                reportMergeSuccess(br,next)
 
     reportAutoMergeResults()
     return rc, errMsg
@@ -82,6 +84,12 @@ def reportMergeFailure(*args):
         reportMergeFailureFunc(*args)
     else:
         log ("Merge failure: %s"%[x for x in args])
+
+def reportMergeSuccess(*args)
+    if reportMergeSuccessFunc:
+        reportMergeSuccessFunc(*args)
+    else:
+        log ("Merge success: %s"%[x for x in args])
 
 def reportSetup():
     if reportSetupFunc:
