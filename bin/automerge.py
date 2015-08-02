@@ -97,7 +97,7 @@ def reportMergeSuccessLog(*args):
     #testSuite.attrib["pass"] = str(int(testSuite.attrib["pass"]) + 1)
     testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
 
-    testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge%sTo%s"%(args[1],args[2]))
+    testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge%sTo%s"%(args[0],args[1]))
     #failure=ET.SubElement(testCase, "pass", message="")
 
 
