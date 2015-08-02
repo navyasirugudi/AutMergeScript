@@ -597,9 +597,9 @@ def autoMerge(old, new):
 
     # Following commands should not normally fail.
     tryFatal("git checkout %s"%old)
-    tryFatal("git pull")
+    tryFatal("git pull origin %s"old)
     tryFatal("git checkout %s"%new)
-    tryFatal("git pull")
+    tryFatal("git pull origin %s"%new)
 
     # Fail in merge requires a ticket and PR
     if not doMerge(old):
