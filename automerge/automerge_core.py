@@ -85,7 +85,7 @@ def reportMergeFailure(*args):
     else:
         log ("Merge failure: %s"%[x for x in args])
 
-def reportMergeSuccess(*args)
+def reportMergeSuccess(*args):
     if reportMergeSuccessFunc:
         reportMergeSuccessFunc(*args)
     else:
