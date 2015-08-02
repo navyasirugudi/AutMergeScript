@@ -469,7 +469,7 @@ def getNamingConvention(reponame, branch):
 
 def getRepoLink():
     #return "https://git.soma.salesforce.com/insights/(.*).git"
-    return "https://github.com/navyasirugudi/(.*)(.git)?"
+    return "https://github.com/navyasirugudi/(.*)"
 
 def getRepoName():
     url = tryFatal1("git config remote.origin.url")
@@ -481,7 +481,7 @@ def getRepoName():
     #if (matches is None):
      #   return ""
 
-    return matches.groups()[0]
+    return matches.groups()[0].replace('.git','')
 
 def mergeSubModules(srcbranch, target):
     submodules = getSubModules()
