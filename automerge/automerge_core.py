@@ -577,7 +577,7 @@ def pushChanges(old) :
         if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
             tryFatal("git reset --hard HEAD^") # Undo merge
-            tryFatal("git pull") # Update from origin
+            tryFatal1("git pull") # Update from origin
             # try again
 
             if not doMerge(old):
