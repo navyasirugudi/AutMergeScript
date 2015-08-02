@@ -64,6 +64,7 @@ def doAll(repoDir):
             errMsg = "Failed branch validation"
             log(errMsg)
             rc = 1
+            continue
 
         if not checkMerged (br,next) :
             if not autoMerge(br, next):
