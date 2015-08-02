@@ -268,7 +268,7 @@ def validateSubModulesForMerge(srcbranch, target):
         if (not targetOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"]), msg))
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, "%s:%s"%(submodule["path"], msg))
 
         #chdir(submodule["path"])
         #currentPath = tryFatal1("pwd")
