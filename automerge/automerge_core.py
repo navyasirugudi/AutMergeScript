@@ -244,7 +244,10 @@ def validateSubModulesForMerge(srcbranch, target):
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, "%s:%s"%(target.strip(),submodule["path"]), msg)
 
+        chdir(submodule["path"])
+        currentPath = tryFatal1("pwd")
         if not autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+            chdir(currentPath)
             return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
     return allok
