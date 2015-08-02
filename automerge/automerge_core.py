@@ -375,7 +375,7 @@ def setSubModuleCommitOnSource(srcSha, target):
     print "Setting submodule commit on source: srcSha(%s), target(%s)"%(srcSha, target)
     submodules = getSubModules()
     curPath = tryFatal1("pwd")
-    tryFatal("git checkout %s"%srcbranch)
+    tryFatal("git checkout %s"%srcSha)
 
     for submodule in submodules:
         submodulePath = submodule["path"]
