@@ -359,8 +359,9 @@ def setSubModuleCommitOnSource(srcbranch, target, sha):
     tryFatal("git checkout %s"%srcbranch)
 
     for submodule in submodules:
-        srcBrSubModuleSha = getShaOfSubModule(sha, submodule["path"])
-        targetBrSubModuleSha = getShaOfSubModule(target, submodule["path"])
+        submodulePath = submodule["path"]
+        srcBrSubModuleSha = getShaOfSubModule(sha, submodulePath)
+        targetBrSubModuleSha = getShaOfSubModule(target, submodulePath)
 
         if (srcBrSubModuleSha != targetBrSubModuleSha):
 
