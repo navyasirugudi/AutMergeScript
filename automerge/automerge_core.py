@@ -118,12 +118,10 @@ def sh(cmd):
 
 
 def tryFatal(cmd):
-    #print cmd
     output, retcode = sh(cmd)
     if retcode:
         log ("%s\n%s"%(cmd, output))
         raise subprocess.CalledProcessError(retcode, cmd, output=output)
-    #print output
     return output
 
 # Same as tryFatal by returns only first line in the output
@@ -166,27 +164,6 @@ def branch(idx):
 def rbranch(idx):
     return "remotes/origin/%s"%branch(idx)
 
-
-# def validateBranchList():
-#     result=0
-
-#     for i in range(len(REL_BRANCH)) :
-#         br=rbranch(i)
-#         sha, err = sh("git rev-parse --quiet --verify %s"%br)
-#         if err != 0 :
-#            result=result+1
-#            errMsg = "Missing branch %s"%br
-#            log (errMsg)
-#            reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
-
-#     return result
-
-# def validateBranchList():
-#     submodules = getSubModules()
-#     for i in range(len(REL_BRANCH)):
-#         for submodule in submodules:
-#             print getShaOfSubModule(branch(i), submodule["path"])
-
 def validateBranchList():
     result=0
 
@@ -225,10 +202,10 @@ def validateBranchList(src, target):
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, src, target, errMsg)
             continue
 
-    # if (result == 0):
-    #     ok = validateSubModulesForMerge(src, target)
-    #     if not ok:
-    #        result=result+1
+    if (result == 0):
+        ok = validateSubModulesForMerge(src, target)
+        if not ok:
+           result=result+1
 
     return result
 
@@ -306,14 +283,14 @@ def doMerge(branch):
     target= currentBranch()
 
     #First, merge submodules if need be
-    # merged, msg = mergeSubModules(branch, target)
-    # if not merged: #reporting would have been already done
-    #     return False
+    merged, msg = mergeSubModules(branch, target)
+    if not merged: #reporting would have been already done
+        return False
 
     global commitMessages
 
     # Determine all merges that occurred to target since branch deviated from it
-    revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%(target,branch)))
+    revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s..%s"%(target,branch)))
     log ("Merge commits: %s"%revList)
 
     # Walk throuh the list in reverse order
