@@ -306,9 +306,9 @@ def doMerge(branch):
     target= currentBranch()
 
     #First, merge submodules if need be
-    merged, msg = mergeSubModules(branch, target)
-    if not merged: #reporting would have been already done
-        return False
+    # merged, msg = mergeSubModules(branch, target)
+    # if not merged: #reporting would have been already done
+    #     return False
 
     global commitMessages
 
