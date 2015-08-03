@@ -620,6 +620,8 @@ def pushChanges(old) :
 # If return is 1 then further merging must be aborted
 def autoMerge(old, new):
     log ("Trying automerge %s to %s"%(old,new))
+    print "XXXXX"
+    revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%("wave.196.9","wave.194.6")))
 
     # Following commands should not normally fail.
     tryFatal("git checkout %s"%old)
@@ -627,6 +629,7 @@ def autoMerge(old, new):
     tryFatal("git checkout %s"%new)
     tryFatal("git pull")
 
+    revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%("wave.196.9","wave.194.6")))
     # Fail in merge requires a ticket and PR
     if not doMerge(old):
         return False
