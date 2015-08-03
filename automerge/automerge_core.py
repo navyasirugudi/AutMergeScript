@@ -270,11 +270,6 @@ def validateSubModulesForMerge(srcbranch, target):
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, msg)
 
-        #chdir(submodule["path"])
-        #currentPath = tryFatal1("pwd")
-        #if not autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)): #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
-         #   return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
-        #chdir(currentPath)
     return allok
 
 def validateSubModule(reponame, repoBranch, submodule, submSha):
@@ -620,8 +615,8 @@ def pushChanges(old) :
 # If return is 1 then further merging must be aborted
 def autoMerge(old, new):
     log ("Trying automerge %s to %s"%(old,new))
-    print "XXXXX"
-    revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%("wave.196.9","wave.194.6")))
+    #print "XXXXX"
+    #revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%("wave.196.9","wave.194.6")))
 
     # Following commands should not normally fail.
     tryFatal("git checkout %s"%old)
