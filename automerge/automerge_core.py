@@ -387,12 +387,12 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
     return True
 
 def setSubModuleCommitOnSource(src, target):
-    print "Setting submodule commit on source: srcSha(%s), target(%s)"%(src, target)
     submodules = getSubModules()
 
     if (len(submodules) == 0):
         return src
 
+    print "Setting submodule commit on source: srcSha(%s), target(%s)"%(src, target)
     curPath = tryFatal1("pwd")
     targetSubMShas = []
 
