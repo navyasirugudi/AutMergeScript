@@ -345,6 +345,7 @@ def doMerge(branch):
     log("All merge commits (if any) are now in target branch %s. Validating that branches %s and %s are completely merged."%(target, branch, target))
     # Test that we are fully merged
 
+    #move out these 4 lines
     subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
     tryFatal1("git checkout %s"%subMEquatorBranchName)
     ss = tryFatal1("git show -s --pretty=%h HEAD")
@@ -542,9 +543,7 @@ def getHead(branch, submodule):
 def getShaOfSubModule(branch, submodule):
     print "get sha of subModule %s on branch %s"%(submodule, branch)
     curPath = tryFatal1("pwd")
-    #curbranch = currentBranch()
 
-    #tryFatal("git pull origin %s"%branch)
     tryFatal("git checkout %s"%branch)
     tryFatal("git submodule update")
 
@@ -553,10 +552,6 @@ def getShaOfSubModule(branch, submodule):
     sha = tryFatal1("git show --format='%H'")
 
     chdir(curPath)
-
-    #print "putting branch back to %s"%curbranch
-    #tryFatal("git checkout %s"%curbranch)
-    #tryFatal("git submodule update")
 
     return sha
 
@@ -569,18 +564,6 @@ def getNamingConvention(reponame, branch):
 def getRepoLink():
     #return "https://git.soma.salesforce.com/insights/(.*).git"
     return "https://github.com/navyasirugudi/(.*)"
-
-# def getRepoName():
-#     url = tryFatal1("git config remote.origin.url")
-#     print "obtained url for repo name: %s"%url
-#     urlRegex = getRepoLink()
-#     urlMatcher = re.compile(urlRegex)
-
-#     matches = urlMatcher.match(url)
-#     #if (matches is None):
-#      #   return ""
-
-#     return matches.groups()[0].replace('.git','')
 
 def getRepoName():
     name = tryFatal1("basename $(git remote show -n origin | grep Fetch | cut -d: -f2-)")
