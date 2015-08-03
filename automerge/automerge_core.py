@@ -366,6 +366,8 @@ def doMerge(branch):
     # Test that we are fully merged
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
+    setSubModuleCommitOnSource(branch, target)
+
     output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch )
     if err == 0:
         shaNew=tryFatal1("git show -s --pretty=%h HEAD")
@@ -382,7 +384,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
 
     return True
 
-def setSubModuleCommitOnSource(srcSha, target):
+def setSubModuleCommitOnSource(src, target):
     print "Setting submodule commit on source: srcSha(%s), target(%s)"%(srcSha, target)
     submodules = getSubModules()
 
@@ -396,7 +398,7 @@ def setSubModuleCommitOnSource(srcSha, target):
         submodulePath = submodule["path"]
         targetSubMShas.append(getShaOfSubModule(target, submodulePath))
 
-    tryFatal("git checkout %s"%srcSha)
+    tryFatal("git checkout %s"%src)
     tryFatal("git submodule update")
 
     for i in range(len(submodules)):
