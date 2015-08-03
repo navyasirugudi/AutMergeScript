@@ -410,7 +410,7 @@ def updateSubmodulePointers(target):
 
 def containsSubmUpdates(sha):
     submodules = getSubModules()
-    output, err = sh("git show --pretty=\"format:\" --name-only %s"%sha)
+    output, err = sh("git log -m -1 --name-only --pretty=\"format:\" %s"%sha)
     lines = breakStripStr(output)
 
     for line in lines:
