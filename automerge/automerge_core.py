@@ -328,12 +328,13 @@ def doMerge(branch):
                 commitMessages.append(lCommitMsg)
                 log ("@no-merge@ merging %s"%commitDetails)
             else:
-                lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
+                #lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
 
                 if (containsSubmUpdates(sha)):
                     sha = setSubModuleCommitOnSource(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
 
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
+                print lCommitMsg
 
                 mergeResult, err=sh("git merge --no-ff -m %s"%(lCommitMsg))
 
@@ -352,6 +353,8 @@ def doMerge(branch):
     subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
     tryFatal1("git checkout %s"%subMEquatorBranchName)
     ss = tryFatal1("git show -s --pretty=%h HEAD")
+    print "SubmoduleEquatorBranchName head: %s"%ss
+
     tryFatal1("git checkout %s"%target)
     mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, ss))
 
@@ -382,6 +385,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
     return True
 
 def updateSubmodulePointers(target):
+    print "Updating subModule pointers of %s"%target
     tryFatal("git checkout %s"%target)
     tryFatal("git submodule update")
 
@@ -398,9 +402,16 @@ def updateSubmodulePointers(target):
         submodulePath = submodule["path"]
         chdir(submodulePath)
 
-        if branchExists(brName): #the branches are created on need basis
+        if not branchExists(brName): #The validation would have been done. Branch not existing here just means it was not needed to be created
+            continue
+
+        currSubmPointer = tryFatal1("git show --format='%H'")
+
+        tryFatal("git checkout %s"%brName)
+        brHead = tryFatal1("git show --format='%H'")
+
+        if currSubmPointer != brHead: #the branches are created on need basis
             update = True
-            tryFatal("git checkout %s"%brName)
 
         chdir(curPath)
 
