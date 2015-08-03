@@ -227,10 +227,10 @@ def validateBranchList(src, target):
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, src, target, errMsg)
             continue
 
-    if (result == 0):
-        ok = validateSubModulesForMerge(src, target)
-        if not ok:
-           result=result+1
+    # if (result == 0):
+    #     ok = validateSubModulesForMerge(src, target)
+    #     if not ok:
+    #        result=result+1
 
     return result
 
