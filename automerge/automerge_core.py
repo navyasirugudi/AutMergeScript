@@ -340,15 +340,13 @@ def doMerge(branch):
     # Test that we are fully merged
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
-    #update the merged submodule pointers
-    updateSubmodulePointers(target)
-
     subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
-    tryFatal("git checkout %s"%branch)
-    tryFatal("git merge %s"%subMEquatorBranchName)
-    tryFatal("git checkout %s"%target)
+    tryFatal1("git checkout %s"%subMEquatorBranchName)
+    ss = tryFatal1("git show -s --pretty=%h HEAD")
+    mergeResult, err=sh("git merge --no-ff -m \"Updating submodule pointer on target %s\" %s"%(target, subMEquatorBranchName))
+    tryFatal1("git checkout %s"%target)
 
-    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch)
+    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%subMEquatorBranchName)
     if err == 0:
         shaNew=tryFatal1("git show -s --pretty=%h HEAD")
     else:
@@ -362,6 +360,8 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
         reportMergeFailure(AutoMergeErrors.MergeError,branch, target, message)
         return False
 
+    #update the merged submodule pointers
+    updateSubmodulePointers(target)
     return True
 
 def updateSubmodulePointers(target):
@@ -418,6 +418,41 @@ def setSubModuleCommitOnSource(src, target):
         src = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
         tryFatal1("git checkout -b %s"%src)
         tryFatal("git commit -a -m \"equating submodule commit to target branch %s\""%target)
+
+    #go back to original branch
+    tryFatal("git checkout %s"%target)
+    tryFatal("git submodule update")
+
+    return src
+
+def setSubModuleCommitOnTarget(src, target):
+    submodules = getSubModules()
+
+    if (len(submodules) == 0):
+        return src
+
+    print "Setting submodule commit on source: srcSha(%s), target(%s)"%(src, target)
+    curPath = tryFatal1("pwd")
+    srcSubMShas = []
+
+    for submodule in submodules:
+        submodulePath = submodule["path"]
+        srcSubMShas.append(getShaOfSubModule(src, submodulePath))
+
+    tryFatal("git checkout %s"%target)
+    tryFatal("git submodule update")
+
+    for i in range(len(submodules)):
+        submodulePath = submodules[i]["path"]
+        chdir(submodulePath)
+        tryFatal("git checkout %s"%srcSubMShas[i])
+        chdir(curPath)
+
+    output, retcode = sh("git diff --exit-code")
+    if retcode != 0:
+        testBranch = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
+        tryFatal1("git checkout -b %s"%testBranch)
+        tryFatal("git commit -a -m \"equating submodule commit to source branch %s\""%src)
 
     #go back to original branch
     tryFatal("git checkout %s"%target)
