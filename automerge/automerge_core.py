@@ -411,8 +411,9 @@ def updateSubmodulePointers(target):
 def containsSubmUpdates(sha):
     submodules = getSubModules()
     err, output = sh("git show --pretty=\"format:\" --name-only %s"%sha)
+    lines = breakStripStr(output)
 
-    for line in output:
+    for line in lines:
         for submodule in submodules:
             if line.strip() == submodule["path"].strip():
                 return True
