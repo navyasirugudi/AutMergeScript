@@ -79,17 +79,17 @@ def reportMergeFailureLog(*args):
     testSuite.attrib["failures"] = str(int(testSuite.attrib["failures"]) + 1)
     testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
     if args[0] == automerge_core.AutoMergeErrors.MergeError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s"%(args[1],args[2]))
+        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s: %s to %s"%(args[1],args[2],args[3]))
         failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[3]
+        failure.text=args[4]
     elif args[0] == automerge_core.AutoMergeErrors.ValidateBranchError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s: ValidateBranchError"%(args[1], args[2]))
+        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s: %s to %s: ValidateBranchError"%(args[1], args[2], args[3]))
         failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[3]
+        failure.text=args[4]
     elif args[0] == automerge_core.AutoMergeErrors.PushValidationError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s: PushBranchValidationError"%(args[1], args[2]))
+        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s: %s to %s: PushBranchValidationError"%(args[1], args[2], args[3]))
         failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[3]
+        failure.text=args[4]
 
 def reportMergeSuccessLog(*args):
     # GUS and PR goes here

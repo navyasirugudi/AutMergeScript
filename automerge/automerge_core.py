@@ -174,7 +174,7 @@ def validateBranchList():
            result=result+1
            errMsg = "Missing branch %s"%br
            log (errMsg)
-           reportMergeFailure(AutoMergeErrors.ValidateBranchError, REL_BRANCH[i].strip(), errMsg)
+           reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), REL_BRANCH[i].strip(), errMsg)
            continue
 
         #if err is 0 check submodules
@@ -199,7 +199,7 @@ def validateBranchList(src, target):
             result=result+1
             errMsg = "Missing branch %s"%br
             log (errMsg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, src, target, errMsg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), src, target, errMsg)
             continue
 
     if (result == 0):
@@ -238,14 +238,14 @@ def validateSubModulesForMerge(srcbranch, target):
         if (not srcOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), srcbranch, target, msg)
 
         targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
 
         if (not targetOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, srcbranch, target, msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), srcbranch, target, msg)
 
     return allok
 
@@ -330,7 +330,7 @@ def doMerge(branch):
 
                 if  err != 0:
                     log ("Conflict merging %s"%commitDetails)
-                    reportMergeFailure(AutoMergeErrors.MergeError,branch, target, "%s: %s"%(getRepoName(), mergeResult))
+                    reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, mergeResult)
                     return False
                 commitMessages.append(lCommitMsg)
                 log ("Succesfully merged %s"%commitDetails)
@@ -358,7 +358,7 @@ def doMerge(branch):
         message="Branch %s is not fully merged into %s after merging all pull request \
 merges. Do you have commits without PR? Manual intevention is required."%(branch, target)
         log(message)
-        reportMergeFailure(AutoMergeErrors.MergeError,branch, target, message)
+        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
         return False
 
     #update the merged submodule pointers
@@ -366,7 +366,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
     if err != 0:
         message = "Unable to update submodule pointers to appropriate branches in target branch %s"%target
         log(message)
-        reportMergeFailure(AutoMergeErrors.MergeError,branch, target, message)
+        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
         return False
 
     return True
@@ -642,7 +642,7 @@ def pushChanges(old) :
             if not beforePushValidateHook():
                 errMsg = "Validation before push in %s failed"%cb
                 log (errMsg)
-                reportMergeFailure(AutoMergeErrors.PushValidationError, old, cb, errMsg)
+                reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
                 return False
 
         #pushResult,err =sh("git push")
