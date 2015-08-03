@@ -338,13 +338,14 @@ def doMerge(branch):
 
     log("All merge commits (if any) are now in target branch %s. Validating that branches %s and %s are completely merged."%(target, branch, target))
     # Test that we are fully merged
-    sha=tryFatal1("git show -s --pretty=%h HEAD")
 
     subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
     tryFatal1("git checkout %s"%subMEquatorBranchName)
     ss = tryFatal1("git show -s --pretty=%h HEAD")
     tryFatal1("git checkout %s"%target)
     mergeResult, err=sh("git merge --no-ff -m \"Updating submodule pointer on target %s\" %s"%(target, ss))
+
+    sha=tryFatal1("git show -s --pretty=%h HEAD")
 
     output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%subMEquatorBranchName)
     if err == 0:
