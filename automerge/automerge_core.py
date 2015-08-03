@@ -105,7 +105,7 @@ def reportAutoMergeResults():
 
 
 def sh(cmd):
-    print cmd
+    #print cmd
     if verbose:
         print cmd
 
@@ -113,7 +113,7 @@ def sh(cmd):
     output, err = proc.communicate()
     if verbose:
         print output
-    print output
+    #print output
     return (output, proc.poll())
 
 
@@ -141,8 +141,6 @@ def breakStripStr(output):
     outList = output.split("\n")
     # for each non empty line strip the spaces
     return [i.strip() for i in outList if i.strip()]
-
-
 
 # Checks if barcnh $1 is merged into branch $2
 # return True if not merged False otherwise
@@ -206,6 +204,9 @@ def validateBranchList(src, target):
         ok = validateSubModulesForMerge(src, target)
         if not ok:
            result=result+1
+
+    if (result == 0):
+        print "Branch validation successful between %s to %s"%(src, target)
 
     return result
 
