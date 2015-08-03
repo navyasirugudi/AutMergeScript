@@ -258,7 +258,7 @@ def validateSubModule(reponame, repoBranch, submodule, submSha, srcAndTargetSame
     brExists = subMbranchExists(submodule["path"], submBrName)
 
     if (not srcAndTargetSame and not brExists): #If the submodule pointers are different in source and target branches, this branch should definitely exist
-        return False, "Expected branch %s doesn't exist for the submodule: %s in path: %s"%(submBrName, submodule["name"], submodule["path"])
+        return False, "Src branch has submodule changes in %s that need to be integrated. Expected branch %s doesn't exist for the submodule: %s in path: %s"%(submodule["name"], submBrName, submodule["name"], submodule["path"])
 
     if srcAndTargetSame and not brExists: #Its ok to not have branch created when there are no changes
         return True, ""
