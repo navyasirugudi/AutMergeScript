@@ -51,6 +51,8 @@ def doAll(repoDir):
     log ("Current working directory is %s"%path.abspath(getcwd()) )
     tryFatal("git fetch")
     tryFatal("git submodule update --init --recursive")
+    print "AAAAA"
+    revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%("wave.196.9","wave.194.6")))
 
     for i in range(len(REL_BRANCH)) :
         br=branch(i)
