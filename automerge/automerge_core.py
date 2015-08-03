@@ -263,6 +263,7 @@ def validateSubModule(reponame, repoBranch, submodule, submSha, srcAndTargetSame
     if srcAndTargetSame and not brExists: #Its ok to not have branch created when there are no changes
         return True, ""
 
+    #But if the branch exists, make sure the pointers are always pointing to the tip of the corresponding submodule branches
     headOfBranch = getHead(submBrName, submodule["path"])
     print "submSha: %s, headOfBranch: %s"%(submSha, headOfBranch)
 
@@ -650,8 +651,8 @@ def pushChanges(old) :
                 reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
                 return False
 
-        #pushResult,err =sh("git push")
-        print "git push"
+        pushResult,err =sh("git push")
+        #print "git push"
         err = 0
         if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
