@@ -438,8 +438,8 @@ def getSubModules():
         if len(line) == 0:
             continue
 
-        #pmatch = path.match(line)
-        #umatch = url.match(line)
+        pmatch = path.match(line)
+        umatch = url.match(line)
 
         #if (pmatch is not None):
         #    print pmatch.groups()
