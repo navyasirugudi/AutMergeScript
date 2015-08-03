@@ -238,14 +238,14 @@ def validateSubModulesForMerge(srcbranch, target):
         if (not srcOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), srcbranch, target, msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, submodule["name"], srcbranch, target, msg)
 
         targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
 
         if (not targetOk):
             allok = False
             log (msg)
-            reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), srcbranch, target, msg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, submodule["name"], srcbranch, target, msg)
 
     return allok
 
