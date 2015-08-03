@@ -391,7 +391,7 @@ def setSubModuleCommitOnSource(src, target):
     submodules = getSubModules()
 
     if (len(submodules) == 0):
-        return
+        return src
 
     curPath = tryFatal1("pwd")
     targetSubMShas = []
