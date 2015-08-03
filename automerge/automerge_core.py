@@ -330,7 +330,7 @@ def doMerge(branch):
 
                 if  err != 0:
                     log ("Conflict merging %s"%commitDetails)
-                    reportMergeFailure(AutoMergeErrors.MergeError,branch, target, mergeResult)
+                    reportMergeFailure(AutoMergeErrors.MergeError,branch, target, "%s: %s"%(getRepoName(), mergeResult))
                     return False
                 commitMessages.append(lCommitMsg)
                 log ("Succesfully merged %s"%commitDetails)
