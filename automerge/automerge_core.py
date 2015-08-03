@@ -340,9 +340,15 @@ def doMerge(branch):
     # Test that we are fully merged
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
-    subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
+    #update the merged submodule pointers
+    updateSubmodulePointers(target)
 
-    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%subMEquatorBranchName)
+    subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
+    tryFatal("git checkout %s"branch)
+    tryFatal("git merge %s"%(subMEquatorBranchName))
+    tryFatal("git checkout %s"target)
+
+    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch)
     if err == 0:
         shaNew=tryFatal1("git show -s --pretty=%h HEAD")
     else:
@@ -357,6 +363,32 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
         return False
 
     return True
+
+def updateSubmodulePointers(target):
+    tryFatal("git checkout %s"%target)
+    tryFatal("git submodule update")
+
+    submodules = getSubModules()
+    if (len(submodules) == 0):
+        return
+
+    curPath = tryFatal1("pwd")
+    reponame = getRepoName()
+    update = False
+
+    for submodule in submodules:
+        brName = getNamingConvention(reponame, target)
+        submodulePath = submodule["path"]
+        chdir(submodulePath)
+
+        if branchExists(brName):
+            update = True
+            tryFatal("git checkout %s"%brName)
+
+        chdir(curPath)
+
+    if update:
+        tryFatal("git commit -a -m \"Updating submodule pointers of %s to appropriate branches\""%target)
 
 def setSubModuleCommitOnSource(src, target):
     submodules = getSubModules()
@@ -385,7 +417,7 @@ def setSubModuleCommitOnSource(src, target):
     if retcode != 0:
         src = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
         tryFatal1("git checkout -b %s"%src)
-        tryFatal("git commit -a -m \"equate subModule commit\"")
+        tryFatal("git commit -a -m \"equating submodule commit to target branch %s\""%target)
 
     #go back to original branch
     tryFatal("git checkout %s"%target)
