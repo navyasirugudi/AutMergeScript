@@ -229,18 +229,20 @@ def validateSubModulesForMerge(srcbranch, target):
         #print "Current branch %s"%currentBranch()
         print "srcBrSubModuleSha = %s"%srcBrSubModuleSha
 
+        srcAndTargetSame = False
         if (srcBrSubModuleSha == targetBrSubModuleSha): #merge not required
+            srcAndTargetSame = True
             print("src and target has same subModule sha %s"%srcBrSubModuleSha)
-            continue
+            #continue
 
-        srcOk, msg = validateSubModule(reponame, srcbranch, submodule, srcBrSubModuleSha)
+        srcOk, msg = validateSubModule(reponame, srcbranch, submodule, srcBrSubModuleSha, srcAndTargetSame)
 
         if (not srcOk):
             allok = False
             log (msg)
             reportMergeFailure(AutoMergeErrors.ValidateBranchError, submodule["name"], srcbranch, target, msg)
 
-        targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha)
+        targetOk, msg = validateSubModule(reponame, target, submodule, targetBrSubModuleSha, srcAndTargetSame)
 
         if (not targetOk):
             allok = False
@@ -249,14 +251,17 @@ def validateSubModulesForMerge(srcbranch, target):
 
     return allok
 
-def validateSubModule(reponame, repoBranch, submodule, submSha):
+def validateSubModule(reponame, repoBranch, submodule, submSha, srcAndTargetSame):
     submBrName = getNamingConvention(reponame, repoBranch)
 
     print "Validating %s exists for submodule %s"%(submBrName, submodule["path"])
     brExists = subMbranchExists(submodule["path"], submBrName)
 
-    if (not brExists):
+    if (not srcAndTargetSame and not brExists): #If the submodule pointers are different in source and target branches, this branch should definitely exist
         return False, "Expected branch %s doesn't exist for the submodule: %s in path: %s"%(submBrName, submodule["name"], submodule["path"])
+
+    if srcAndTargetSame and not brExists: #Its ok to not have branch created when there are no changes
+        return True, ""
 
     headOfBranch = getHead(submBrName, submodule["path"])
     print "submSha: %s, headOfBranch: %s"%(submSha, headOfBranch)
