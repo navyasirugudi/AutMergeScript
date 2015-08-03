@@ -309,15 +309,17 @@ dryRun=0 # if set to 1 then, don't actually merge
 # Both branches must be checked out and in sync with remote before calling
 def doMerge(branch):
     target= currentBranch()
+
+    #First, merge submodules if need be
+    merged, msg = mergeSubModules(branch, target)
+    if not merged: #reporting would have been already done
+        return False
+
     global commitMessages
 
     # Determine all merges that occurred to target since branch deviated from it
     revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s...%s"%(target,branch)))
     log ("Merge commits: %s"%revList)
-
-    merged, msg = mergeSubModules(branch, target)
-    if not merged: #reporting would have been already done
-        return False
 
     # Walk throuh the list in reverse order
     for idx in reversed(range(len(revList))) :
@@ -383,19 +385,25 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
 def setSubModuleCommitOnSource(srcSha, target):
     print "Setting submodule commit on source: srcSha(%s), target(%s)"%(srcSha, target)
     submodules = getSubModules()
+
+    if (len(submodules) == 0):
+        return
+
     curPath = tryFatal1("pwd")
-    tryFatal("git checkout %s"%srcSha)
+    targetSubMShas = []
 
     for submodule in submodules:
         submodulePath = submodule["path"]
-        srcBrSubModuleSha = getShaOfSubModule(srcSha, submodulePath)
-        targetBrSubModuleSha = getShaOfSubModule(target, submodulePath)
+        targetSubMShas.append(getShaOfSubModule(target, submodulePath))
 
-        if (srcBrSubModuleSha != targetBrSubModuleSha):
-            print "sha is different for src and target"
-            chdir(submodulePath)
-            tryFatal("git checkout %s"%targetBrSubModuleSha)
-            chdir(curPath)
+    tryFatal("git checkout %s"%srcSha)
+    tryFatal("git submodule update")
+
+    for i in range(len(submodules)):
+        submodulePath = submodules[i]["path"]
+        chdir(submodulePath)
+        tryFatal("git checkout %s"%targetSubMShas[i])
+        chdir(curPath)
 
     output, retcode = sh("git diff --exit-code")
     if retcode != 0:
@@ -404,8 +412,6 @@ def setSubModuleCommitOnSource(srcSha, target):
     #go back to original branch
     tryFatal("git checkout %s"%target)
     tryFatal("git submodule update")
-
-#this returns the submodule paths in the repo
 
 def gitUrl():
     #return "git.soma.salesforce.com:insights"
@@ -420,26 +426,26 @@ def getSubModules():
 
     urlregex = "(.*)url(.*)=(.*)git@%s/(.*)"%gitUrl()
     pathregex = "(.*)path(.*)=(.*)"
-    print urlregex
-    print pathregex
+    #print urlregex
+    #print pathregex
 
     url = re.compile(urlregex)
     path = re.compile(pathregex)
 
     module = {}
     for line in gitmfile:
-        print line
+        #print line
         if len(line) == 0:
             continue
 
-        pmatch = path.match(line)
-        umatch = url.match(line)
+        #pmatch = path.match(line)
+        #umatch = url.match(line)
 
-        if (pmatch is not None):
-            print pmatch.groups()
+        #if (pmatch is not None):
+        #    print pmatch.groups()
 
-        if (umatch is not None):
-            print umatch.groups()
+        #if (umatch is not None):
+        #    print umatch.groups()
 
         if (umatch is not None and len(umatch.groups()) == 4):
             module["name"] = umatch.groups()[3].strip()
@@ -474,7 +480,7 @@ def getHead(branch, submodule):
 def getShaOfSubModule(branch, submodule):
     print "get sha of subModule %s on branch %s"%(submodule, branch)
     curPath = tryFatal1("pwd")
-    curbranch = currentBranch()
+    #curbranch = currentBranch()
 
     #tryFatal("git pull origin %s"%branch)
     tryFatal("git checkout %s"%branch)
@@ -486,9 +492,9 @@ def getShaOfSubModule(branch, submodule):
 
     chdir(curPath)
 
-    print "putting branch back to %s"%curbranch
-    tryFatal("git checkout %s"%curbranch)
-    tryFatal("git submodule update")
+    #print "putting branch back to %s"%curbranch
+    #tryFatal("git checkout %s"%curbranch)
+    #tryFatal("git submodule update")
 
     return sha
 
@@ -516,7 +522,7 @@ def getRepoLink():
 
 def getRepoName():
     name = tryFatal1("basename $(git remote show -n origin | grep Fetch | cut -d: -f2-)")
-    print "obtained name for repo name: %s"%name
+    #print "obtained name for repo name: %s"%name
 
     return name.replace('.git','')
 
@@ -530,10 +536,11 @@ def mergeSubModules(srcbranch, target):
     for submodule in submodules:
         #check submodule pointer to head of the corresponding release branch of the submodules on both src and target branches.
 
-        targetBrSubModuleSha = getShaOfSubModule(target, submodule["path"])
         srcBrSubModuleSha = getShaOfSubModule(srcbranch, submodule["path"])
+        targetBrSubModuleSha = getShaOfSubModule(target, submodule["path"])
 
         if (srcBrSubModuleSha == targetBrSubModuleSha): #merge not required
+            print "Merge not required for %s"%submodule
             continue
 
         chdir(submodule["path"])
@@ -543,15 +550,17 @@ def mergeSubModules(srcbranch, target):
         chdir(currentPath)
 
         if not merged:
+            print "AutoMerge failed for %s"%submodule
             return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
+
+        print "AutoMerge succeeded for %s"%submodule
 
     return True, ""
 
 def branchExists(branchName):
-    tryFatal("pwd")
     print "verifying branch %s"%branchName
+    tryFatal("pwd")
     sha, err = sh("git rev-parse --quiet --verify remotes/origin/%s"%branchName)
-    print err
     return err == 0
 
 def subMbranchExists(submodulePath, branchName):
