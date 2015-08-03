@@ -603,7 +603,7 @@ def pushChanges(old) :
         if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
             tryFatal("git reset --hard HEAD^") # Undo merge
-            tryFatal("git pull origin %s"%cb) # Update from origin
+            tryFatal("git pull") # Update from origin
             # try again
 
             if not doMerge(old):
@@ -623,9 +623,9 @@ def autoMerge(old, new):
 
     # Following commands should not normally fail.
     tryFatal("git checkout %s"%old)
-    tryFatal("git pull origin %s"%old)
+    tryFatal("git pull")
     tryFatal("git checkout %s"%new)
-    tryFatal("git pull origin %s"%new)
+    tryFatal("git pull")
 
     # Fail in merge requires a ticket and PR
     if not doMerge(old):
