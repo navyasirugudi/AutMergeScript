@@ -344,9 +344,9 @@ def doMerge(branch):
     updateSubmodulePointers(target)
 
     subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
-    tryFatal("git checkout %s"branch)
-    tryFatal("git merge %s"%(subMEquatorBranchName))
-    tryFatal("git checkout %s"target)
+    tryFatal("git checkout %s"%branch)
+    tryFatal("git merge %s"%subMEquatorBranchName)
+    tryFatal("git checkout %s"%target)
 
     output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch)
     if err == 0:
