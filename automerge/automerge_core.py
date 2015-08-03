@@ -329,8 +329,10 @@ def doMerge(branch):
             else:
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
 
-                subMEquatorBranch = setSubModuleCommitOnSource(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
-                lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, subMEquatorBranch)
+                if (containsSubmUpdates(sha)):
+                    sha = setSubModuleCommitOnSource(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
+
+                lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
 
                 mergeResult, err=sh("git merge --no-ff -m %s"%(lCommitMsg))
 
@@ -350,7 +352,7 @@ def doMerge(branch):
     tryFatal1("git checkout %s"%subMEquatorBranchName)
     ss = tryFatal1("git show -s --pretty=%h HEAD")
     tryFatal1("git checkout %s"%target)
-    mergeResult, err=sh("git merge --no-ff -m \"Updating submodule pointer on target %s\" %s"%(target, ss))
+    mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, ss))
 
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
@@ -402,9 +404,21 @@ def updateSubmodulePointers(target):
         chdir(curPath)
 
     if update:
-        tryFatal("git commit -a -m \"Updating submodule pointers of %s to appropriate branches\""%target)
+        tryFatal("git commit -a -m \"Auto merge (Regular) Updating submodule pointers of %s to appropriate branches\""%target)
 
     return 0
+
+def containsSubmUpdates(sha):
+    submodules = getSubModules()
+    err, output = sh("git show --pretty=\"format:\" --name-only %s"%sha)
+
+    for line in output:
+        for submodule in submodules:
+            if line.strip() == submodule["path"].strip():
+                return True
+
+    return False
+
 
 def setSubModuleCommitOnSource(src, target):
     submodules = getSubModules()
@@ -433,7 +447,7 @@ def setSubModuleCommitOnSource(src, target):
     if retcode != 0:
         src = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
         tryFatal1("git checkout -b %s"%src)
-        tryFatal("git commit -a -m \"equating submodule commit to target branch %s\""%target)
+        tryFatal("git commit -a -m \"Auto merge (Regular) equating submodule commit on sha to target branch %s\""%target)
 
     #go back to original branch
     tryFatal("git checkout %s"%target)
