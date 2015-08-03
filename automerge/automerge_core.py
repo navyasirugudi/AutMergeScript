@@ -351,9 +351,11 @@ def doMerge(branch):
             else:
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
 
-                setSubModuleCommitOnSource(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
+                subMEquatorBranch = setSubModuleCommitOnSource(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
+                lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, subMEquatorBranch)
 
                 mergeResult, err=sh("git merge --no-ff -m %s"%(lCommitMsg))
+
                 if  err != 0:
                     log ("Conflict merging %s"%commitDetails)
                     reportMergeFailure(AutoMergeErrors.MergeError,branch, target, mergeResult)
@@ -366,9 +368,9 @@ def doMerge(branch):
     # Test that we are fully merged
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
-    setSubModuleCommitOnSource(branch, target)
+    subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
 
-    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch )
+    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%subMEquatorBranchName)
     if err == 0:
         shaNew=tryFatal1("git show -s --pretty=%h HEAD")
     else:
@@ -409,11 +411,15 @@ def setSubModuleCommitOnSource(src, target):
 
     output, retcode = sh("git diff --exit-code")
     if retcode != 0:
+        src = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
+        tryFatal1("git checkout -b %s"%src)
         tryFatal("git commit -a -m \"equate subModule commit\"")
 
     #go back to original branch
     tryFatal("git checkout %s"%target)
     tryFatal("git submodule update")
+
+    return src
 
 def gitUrl():
     #return "git.soma.salesforce.com:insights"
