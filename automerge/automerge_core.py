@@ -362,7 +362,13 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
         return False
 
     #update the merged submodule pointers
-    updateSubmodulePointers(target)
+    err = updateSubmodulePointers(target)
+    if err != 0:
+        message = "Unable to update submodule pointers to appropriate branches in target branch %s"%target
+        log(message)
+        reportMergeFailure(AutoMergeErrors.MergeError,branch, target, message)
+        return False
+
     return True
 
 def updateSubmodulePointers(target):
@@ -371,7 +377,7 @@ def updateSubmodulePointers(target):
 
     submodules = getSubModules()
     if (len(submodules) == 0):
-        return
+        return 0
 
     curPath = tryFatal1("pwd")
     reponame = getRepoName()
@@ -382,7 +388,7 @@ def updateSubmodulePointers(target):
         submodulePath = submodule["path"]
         chdir(submodulePath)
 
-        if branchExists(brName):
+        if branchExists(brName): #the branches are created on need basis
             update = True
             tryFatal("git checkout %s"%brName)
 
@@ -390,6 +396,8 @@ def updateSubmodulePointers(target):
 
     if update:
         tryFatal("git commit -a -m \"Updating submodule pointers of %s to appropriate branches\""%target)
+
+    return 0, ""
 
 def setSubModuleCommitOnSource(src, target):
     submodules = getSubModules()
