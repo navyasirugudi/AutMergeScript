@@ -397,7 +397,7 @@ def updateSubmodulePointers(target):
     if update:
         tryFatal("git commit -a -m \"Updating submodule pointers of %s to appropriate branches\""%target)
 
-    return 0, ""
+    return 0
 
 def setSubModuleCommitOnSource(src, target):
     submodules = getSubModules()
