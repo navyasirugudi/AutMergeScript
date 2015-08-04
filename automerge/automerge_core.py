@@ -89,6 +89,10 @@ def resetbrToRemote(br):
     sha = tryFatal1("git rev-parse origin/%s"%br)
     tryFatal1("git checkout %s"%br)
     tryFatal("git reset --hard %s"%sha)
+    submodules = getSubModules()
+    for subModule in submodules:
+        chdir(subModule["path"])
+        resetbrToRemote(getNamingConvention())
 
 def reportMergeFailure(*args):
     if reportMergeFailureFunc:
@@ -339,8 +343,8 @@ def doMerge(branch):
                 commitMessages.append(lCommitMsg)
                 log ("@no-merge@ merging %s"%commitDetails)
             else:
-                if containsSubmUpdates(sha):
-                    sha = equateSubmoduleCommits(sha, target) #this is for not producing any conflicts in submodule updates
+                #if containsSubmUpdates(sha):
+                sha = equateSubmoduleCommits(sha, target) #this is for not producing any conflicts in submodule updates
 
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
                 print lCommitMsg
