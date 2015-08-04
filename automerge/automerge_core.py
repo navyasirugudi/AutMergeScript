@@ -402,16 +402,14 @@ def updateSubmodulePointers(target):
         submodulePath = submodule["path"]
         chdir(submodulePath)
 
-        if not branchExists(brName): #The validation would have been done. Branch not existing here just means it was not needed to be created
-            continue
+        if branchExists(brName): #The validation would have been done. Branch not existing here just means it was not needed to be created
+            currSubmPointer = tryFatal1("git show --format='%H'")
 
-        currSubmPointer = tryFatal1("git show --format='%H'")
+            tryFatal("git checkout %s"%brName)
+            brHead = tryFatal1("git show --format='%H'")
 
-        tryFatal("git checkout %s"%brName)
-        brHead = tryFatal1("git show --format='%H'")
-
-        if currSubmPointer != brHead: #the branches are created on need basis
-            update = True
+            if currSubmPointer != brHead: #the branches are created on need basis
+                update = True
 
         chdir(curPath)
 
