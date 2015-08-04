@@ -68,21 +68,26 @@ def doAll(repoDir):
 
         if not checkMerged (br,next) :
             if not autoMerge(br, next):
-                errMsg = "Unable to finish automerge. Everything must be reported by now."
+                #errMsg = "Unable to finish automerge. Everything must be reported by now."
+                errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
-                rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
-                #resetbrToRemote(next)
-                break
+                #rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
+                #break
+                resetbrToRemote(next) #this is for further merges to continue
             else:
                 log ("Merge %s to %s: success"%(br,next))
                 reportMergeSuccess(br,next,"")
         else:
             log ("Merge %s to %s: not needed"%(br,next))
-            reportMergeSuccess(br,next,"not needed")
+            reportMergeSuccess(br,next,"(not needed)")
 
     reportAutoMergeResults()
     return rc, errMsg
 
+def resetbrToRemote(br):
+    sha = tryFatal1("git rev-parse origin/%s"%br)
+    tryFatal1("git checkout %s"%br)
+    tryFatal("git reset --hard %s"%sha)
 
 def reportMergeFailure(*args):
     if reportMergeFailureFunc:
@@ -663,6 +668,8 @@ def autoMerge(old, new):
     if not doMerge(old):
         return False
 
+    if (old == "wave.194.8"):
+        return False
     return pushChangesFunc(old)
 
 pushChangesFunc=pushChanges
