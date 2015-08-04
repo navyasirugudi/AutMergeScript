@@ -91,8 +91,10 @@ def resetbrToRemote(br):
     tryFatal("git reset --hard %s"%sha)
     submodules = getSubModules()
     for subModule in submodules:
+        currPwd = tryFatal1("pwd")
         chdir(subModule["path"])
-        resetbrToRemote(getNamingConvention())
+        resetbrToRemote(getNamingConvention(getRepoName(), br))
+        chdir(currPwd)
 
 def reportMergeFailure(*args):
     if reportMergeFailureFunc:
