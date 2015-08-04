@@ -349,16 +349,10 @@ def doMerge(branch):
     log("All merge commits (if any) are now in target branch %s. Validating that branches %s and %s are completely merged."%(target, branch, target))
     # Test that we are fully merged
 
-    #move out these 4 lines
-    #equate submodule commits on source branch
-    #equateSubmoduleCommitsOnSrc(branch, target)
-    branch = equateSubmoduleCommits(branch, target)
-    #tryFatal1("git checkout %s"%equalizedBr)
-    # ss = tryFatal1("git show -s --pretty=%h HEAD")
-    # print "SubmoduleEquatorBranchName head: %s"%ss
-
-    #tryFatal1("git checkout %s"%target)
-    #mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, equalizedBr))
+    #equate submodule branches with target
+    #commit into a new branch
+    #merge the submodule commit update into target branch (this should be done for no new commits to be created when merging branches directly)
+    branch = equateSubmoduleCommitAndMerge(branch, target)
 
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
@@ -385,6 +379,17 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
         return False
 
     return True
+
+def equateSubmoduleCommitAndMerge(branch, target):
+    branch = equateSubmoduleCommits(branch, target)
+
+    tryFatal1("git checkout %s"%branch)
+    submoduleupdateSha = tryFatal1("git show -s --pretty=%h HEAD")
+    print "submoduleupdate head: %s"%submoduleupdateSha
+
+    tryFatal1("git checkout %s"%target)
+    mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, submoduleupdateSha))
+    return branch
 
 def updateSubmodulePointers(target):
     print "Updating subModule pointers of %s"%target
