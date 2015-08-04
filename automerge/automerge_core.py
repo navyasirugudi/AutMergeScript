@@ -158,6 +158,7 @@ def checkMerged(mergeFrom, mergeTo):
     log ("check if branch %s merged into %s" %(mergeFrom, mergeTo))
     merged=breakStripStr(tryFatal("git branch -a --merged remotes/origin/%s"%mergeTo)) # || echo "remotes/origin/$mergeFrom")
 
+    return False
     if ("remotes/origin/%s"%mergeFrom in merged):
         log ("%s to %s: OK"%(mergeFrom, mergeTo))
         return True
