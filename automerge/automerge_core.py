@@ -4,6 +4,7 @@ from subprocess import Popen, PIPE
 from os import path,getcwd,chdir
 import pdb
 import re
+import uuid
 
 import json
 # Const
@@ -158,7 +159,6 @@ def checkMerged(mergeFrom, mergeTo):
     log ("check if branch %s merged into %s" %(mergeFrom, mergeTo))
     merged=breakStripStr(tryFatal("git branch -a --merged remotes/origin/%s"%mergeTo)) # || echo "remotes/origin/$mergeFrom")
 
-    return False
     if ("remotes/origin/%s"%mergeFrom in merged):
         log ("%s to %s: OK"%(mergeFrom, mergeTo))
         return True
@@ -302,7 +302,7 @@ def doMerge(branch):
 
     #First, merge submodules if need be
     merged, msg = mergeSubModules(branch, target)
-    if not merged: #reporting would have been already done
+    if not merged:
         return False
 
     global commitMessages
@@ -358,12 +358,9 @@ def doMerge(branch):
     log("All merge commits (if any) are now in target branch %s. Validating that branches %s and %s are completely merged."%(target, branch, target))
     # Test that we are fully merged
 
-    #equate submodule branches with target
-    #commit into a new branch
-    #merge the submodule commit update into target branch (this should be done for no new commits are created when merging branches directly)
-    #if this is done there is no point of the following test
-    #branch = equateSubmoduleCommitAndMerge(branch, target)
-    newtargetbranch = equateSubmoduleCommits(target, branch) #this is equating target submodules to to source, if they differ the submodules are equated on a different branch: newtargetbranch which is used to in the following test
+    #this is equating target submodules pointers to source.
+    #If the submodules differ the submodules are equated on a different branch: newtargetbranch which is used to in the following test to check if the branches are merged
+    newtargetbranch = equateSubmoduleCommits(target, branch)
 
     tryFatal1("git checkout %s"%newtargetbranch)
 
@@ -454,14 +451,15 @@ def containsSubmUpdates(sha):
 
     return False
 
-#returns src if no submodule commits need to be updated. Otherwise returns a branch with name 00_src_to_target_00 with submodule commits equated to target
+#returns src if no submodule commits need to be updated.
+#Otherwise returns a branch with name 00_src_to_target_00 with submodule commits equated to target
 def equateSubmoduleCommits(src, target):
     submodules = getSubModules()
 
     if (len(submodules) == 0):
         return src
 
-    print "Setting submodule commit on source: srcSha(%s), target(%s)"%(src, target)
+    #print "Setting submodule commit on source: srcSha(%s), target(%s)"%(src, target)
     curPath = tryFatal1("pwd")
     targetSubMShas = []
 
@@ -479,9 +477,9 @@ def equateSubmoduleCommits(src, target):
 
     output, retcode = sh("git diff --exit-code")
     if retcode != 0:
-        src = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
+        src = "%s-to-%s_uuid_%s"%(src, target, str(uuid.uuid4())) #since there could be multiple retries, this needs to be unique.
         tryFatal1("git checkout -b %s"%src)
-        tryFatal("git commit -a -m \"Auto merge: Equating submodule commit on %s to target branch %s\""%(src, target))
+        tryFatal("git commit -a -m \"Auto merge: Equating submodule commit on %s to branch %s\""%(src, target))
 
     #go back to original branch
     gotoBrAndSubmUpdate(target)
@@ -531,7 +529,7 @@ def getSubModules():
 
 #gets the sha of the head of the submodule under that branch
 def getHead(branch, submodule):
-    print "Getting head of subModule %s on branch %s"%(submodule, branch)
+    #print "Getting head of subModule %s on branch %s"%(submodule, branch)
     curPath = tryFatal1("pwd")
 
     tryFatal("git submodule update")
@@ -591,12 +589,14 @@ def mergeSubModules(srcbranch, target):
 
         chdir(submodule["path"])
 
-        merged = autoMerge(getNamingConvention(reponame, srcbranch), getNamingConvention(reponame, target)) #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
+        srcsubmBr = getNamingConvention(reponame, srcbranch)
+        targetsubmBr = getNamingConvention(reponame, target)
+        merged = autoMerge(srcsubmBr, targetsubmBr) #Will parent be a submodule of the submodule again? Then this would become a circular loop. So far we have only one level on submodules
 
         chdir(currentPath)
 
         if not merged:
-            print "AutoMerge failed for %s"%submodule
+            #print "AutoMerge failed for %s"%submodule
             return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
         log("AutoMerge succeeded for %s"%submodule)
@@ -669,8 +669,6 @@ def autoMerge(old, new):
     if not doMerge(old):
         return False
 
-    if (old == "wave.194.8"):
-        return False
     return pushChangesFunc(old)
 
 pushChangesFunc=pushChanges
