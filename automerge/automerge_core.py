@@ -350,13 +350,15 @@ def doMerge(branch):
     # Test that we are fully merged
 
     #move out these 4 lines
-    # equalizedBr = equateSubmoduleCommits(branch, target)
-    # tryFatal1("git checkout %s"%equalizedBr)
+    #equate submodule commits on source branch
+    #equateSubmoduleCommitsOnSrc(branch, target)
+    branch = equateSubmoduleCommits(branch, target)
+    #tryFatal1("git checkout %s"%equalizedBr)
     # ss = tryFatal1("git show -s --pretty=%h HEAD")
     # print "SubmoduleEquatorBranchName head: %s"%ss
 
-    # tryFatal1("git checkout %s"%target)
-    # mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, ss))
+    #tryFatal1("git checkout %s"%target)
+    #mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, equalizedBr))
 
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
