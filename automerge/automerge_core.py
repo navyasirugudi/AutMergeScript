@@ -95,7 +95,9 @@ def resetbrToRemote(br):
     for subModule in submodules:
         currPwd = tryFatal1("pwd")
         chdir(subModule["path"])
-        resetbrToRemote(getNamingConvention(getRepoName(), br))
+        br = getNamingConvention(getRepoName(), br)
+        if brExists(br):
+            resetbrToRemote(br)
         chdir(currPwd)
 
 def reportMergeFailure(*args):
