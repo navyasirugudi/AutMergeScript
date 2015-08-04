@@ -108,7 +108,6 @@ def reportAutoMergeResults():
 
 
 def sh(cmd):
-    print cmd
     if verbose:
         print cmd
 
@@ -116,7 +115,6 @@ def sh(cmd):
     output, err = proc.communicate()
     if verbose:
         print output
-    print output
     return (output, proc.poll())
 
 
@@ -331,10 +329,8 @@ def doMerge(branch):
                 commitMessages.append(lCommitMsg)
                 log ("@no-merge@ merging %s"%commitDetails)
             else:
-                #lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
-
-                if (containsSubmUpdates(sha)):
-                    sha = equateSubmoduleCommits(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
+                if containsSubmUpdates(sha):
+                    sha = equateSubmoduleCommits(sha, target) #this is for not producing any conflicts in submodule updates
 
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
                 print lCommitMsg
@@ -354,11 +350,17 @@ def doMerge(branch):
 
     #equate submodule branches with target
     #commit into a new branch
-    #merge the submodule commit update into target branch (this should be done for no new commits to be created when merging branches directly)
-    branch = equateSubmoduleCommitAndMerge(branch, target)
+    #merge the submodule commit update into target branch (this should be done for no new commits are created when merging branches directly)
+    #if this is done there is no point of the following test
+    #branch = equateSubmoduleCommitAndMerge(branch, target)
+    newtargetbranch = equateSubmoduleCommits(target, branch) #this is equating target submodules to to source, if they differ the submodules are equated on a different branch: newtargetbranch which is used to in the following test
+
+    tryFatal1("git checkout %s"%newtargetbranch)
 
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
+    #this test will only validate if there are any direct commits after the last merge.
+    #But there could be commits in between the merge commits which would have sneaked in by here
     output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch)
     if err == 0:
         shaNew=tryFatal1("git show -s --pretty=%h HEAD")
@@ -373,6 +375,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
         reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
         return False
 
+    tryFatal1("git checkout %s"%target)
     #update the merged submodule pointers
     err = updateSubmodulePointers(target)
     if err != 0:
@@ -384,20 +387,20 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
     return True
 
 def equateSubmoduleCommitAndMerge(branch, target):
-    branch = equateSubmoduleCommits(branch, target)
+    newbranch = equateSubmoduleCommits(branch, target)
 
-    tryFatal1("git checkout %s"%branch)
+    if newbranch == branch:
+        return branch
+
+    tryFatal1("git checkout %s"%newbranch)
     submoduleupdateSha = tryFatal1("git show -s --pretty=%h HEAD")
-    print "submoduleupdate head: %s"%submoduleupdateSha
 
     tryFatal1("git checkout %s"%target)
-    mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, submoduleupdateSha))
-    return branch
+    mergeResult, err=sh("git merge --no-ff -m \"Auto merge: Final submodule equator merge on source %s\" %s"%(branch, submoduleupdateSha))
+    return newbranch
 
 def updateSubmodulePointers(target):
-    print "Updating subModule pointers of %s"%target
-    tryFatal("git checkout %s"%target)
-    tryFatal("git submodule update")
+    gotoBrAndSubmUpdate(target)
 
     submodules = getSubModules()
     if (len(submodules) == 0):
@@ -412,7 +415,7 @@ def updateSubmodulePointers(target):
         submodulePath = submodule["path"]
         chdir(submodulePath)
 
-        if branchExists(brName): #The validation would have been done. Branch not existing here just means it was not needed to be created
+        if branchExists(brName): #The validation would have been done earlier. Branch not existing here just means it was not needed to be created
             currSubmPointer = tryFatal1("git show --format='%H'")
 
             tryFatal("git checkout %s"%brName)
@@ -424,7 +427,8 @@ def updateSubmodulePointers(target):
         chdir(curPath)
 
     if update:
-        tryFatal("git commit -a -m \"Auto merge (Regular) Updating submodule pointers of %s to appropriate branches\""%target)
+        log("Updating subModule pointers of %s to corresponding release-branches"%target)
+        tryFatal("git commit -a -m \"Auto merge: Updating submodule pointers of %s to their submodule release branches\""%target)
 
     return 0
 
@@ -441,7 +445,6 @@ def containsSubmUpdates(sha):
     return False
 
 #returns src if no submodule commits need to be updated. Otherwise returns a branch with name 00_src_to_target_00 with submodule commits equated to target
-#def setSubModuleCommitOnSource(src, target):
 def equateSubmoduleCommits(src, target):
     submodules = getSubModules()
 
@@ -456,8 +459,7 @@ def equateSubmoduleCommits(src, target):
         submodulePath = submodule["path"]
         targetSubMShas.append(getShaOfSubModule(target, submodulePath))
 
-    tryFatal("git checkout %s"%src)
-    tryFatal("git submodule update")
+    gotoBrAndSubmUpdate(src)
 
     for i in range(len(submodules)):
         submodulePath = submodules[i]["path"]
@@ -469,13 +471,16 @@ def equateSubmoduleCommits(src, target):
     if retcode != 0:
         src = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
         tryFatal1("git checkout -b %s"%src)
-        tryFatal("git commit -a -m \"Auto merge (Regular) Equating submodule commit on sha to target branch %s\""%target)
+        tryFatal("git commit -a -m \"Auto merge: Equating submodule commit on %s to target branch %s\""%(src, target))
 
     #go back to original branch
-    tryFatal("git checkout %s"%target)
-    tryFatal("git submodule update")
+    gotoBrAndSubmUpdate(target)
 
     return src
+
+def gotoBrAndSubmUpdate(br):
+    tryFatal("git checkout %s"%br)
+    tryFatal("git submodule update")
 
 def gitUrl():
     #return "git.soma.salesforce.com:insights"
@@ -509,7 +514,6 @@ def getSubModules():
             module["path"] = pmatch.groups()[2].strip()
 
         if ("path" in module and "name" in module):
-            print "Obtained subModule: %s"%module
             modules.append(module)
             module = {}
 
@@ -533,11 +537,9 @@ def getHead(branch, submodule):
     return sha
 
 def getShaOfSubModule(branch, submodule):
-    print "get sha of subModule %s on branch %s"%(submodule, branch)
     curPath = tryFatal1("pwd")
 
-    tryFatal("git checkout %s"%branch)
-    tryFatal("git submodule update")
+    gotoBrAndSubmUpdate(branch)
 
     chdir(submodule)
 
@@ -559,8 +561,6 @@ def getRepoLink():
 
 def getRepoName():
     name = tryFatal1("basename $(git remote show -n origin | grep Fetch | cut -d: -f2-)")
-    #print "obtained name for repo name: %s"%name
-
     return name.replace('.git','')
 
 def mergeSubModules(srcbranch, target):
@@ -568,7 +568,6 @@ def mergeSubModules(srcbranch, target):
     submodules = getSubModules()
     reponame = getRepoName()
     currentPath = tryFatal1("pwd")
-    print "Merging submodules for %s. Length of submodules: %s"%(reponame, len(submodules))
 
     for submodule in submodules:
         #check submodule pointer to head of the corresponding release branch of the submodules on both src and target branches.
@@ -577,7 +576,7 @@ def mergeSubModules(srcbranch, target):
         targetBrSubModuleSha = getShaOfSubModule(target, submodule["path"])
 
         if (srcBrSubModuleSha == targetBrSubModuleSha): #merge not required
-            print "Merge not required for %s"%submodule
+            log("Merge not required for %s"%submodule)
             continue
 
         chdir(submodule["path"])
@@ -590,7 +589,7 @@ def mergeSubModules(srcbranch, target):
             print "AutoMerge failed for %s"%submodule
             return False, "Failed merging submodule: %s on %s"%(submodule["name"], reponame)
 
-        print "AutoMerge succeeded for %s"%submodule
+        log("AutoMerge succeeded for %s"%submodule)
 
     return True, ""
 
@@ -626,9 +625,9 @@ def pushChanges(old) :
                 reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
                 return False
 
-        pushResult,err =sh("git push")
-        #print "git push"
-        #err = 0
+        #pushResult,err =sh("git push")
+        print "git push"
+        err = 0
         if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
             tryFatal("git reset --hard HEAD^") # Undo merge
