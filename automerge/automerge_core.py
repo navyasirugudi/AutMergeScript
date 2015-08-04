@@ -71,9 +71,12 @@ def doAll(repoDir):
                 errMsg = "Unable to finish automerge. Everything must be reported by now."
                 log (errMsg)
                 rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
+                #resetbrToRemote(next)
                 break
             else:
-                reportMergeSuccess(br,next)
+                reportMergeSuccess(br,next,"")
+        else:
+            reportMergeSuccess(br,next,"not needed")
 
     reportAutoMergeResults()
     return rc, errMsg
@@ -623,9 +626,9 @@ def pushChanges(old) :
                 reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
                 return False
 
-        #pushResult,err =sh("git push")
-        print "git push"
-        err = 0
+        pushResult,err =sh("git push")
+        #print "git push"
+        #err = 0
         if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
             tryFatal("git reset --hard HEAD^") # Undo merge

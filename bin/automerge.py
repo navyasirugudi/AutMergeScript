@@ -93,13 +93,9 @@ def reportMergeFailureLog(*args):
 
 def reportMergeSuccessLog(*args):
     # GUS and PR goes here
-    #log (args)
-    #testSuite.attrib["pass"] = str(int(testSuite.attrib["pass"]) + 1)
     testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
 
-    testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s"%(args[0],args[1]))
-    #failure=ET.SubElement(testCase, "pass", message="")
-
+    testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s %s"%(args[0],args[1],args[2]))
 
 def writeTestXml():
     testFile=os.getcwd() + "/AutoMergeResults_tests.xml"
