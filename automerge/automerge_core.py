@@ -74,6 +74,7 @@ def doAll(repoDir):
                 log (errMsg)
                 #rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
                 #break
+                if i < len(REL_BRANCH) - 2:
                 resetbrToRemote(next) #this is for further merges to continue
             else:
                 log ("Merge %s to %s: success"%(br,next))
