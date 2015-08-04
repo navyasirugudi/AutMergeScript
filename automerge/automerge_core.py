@@ -441,8 +441,15 @@ def updateSubmodulePointers(target):
         chdir(curPath)
 
     if update:
-        log("Updating subModule pointers of %s to corresponding release-branches"%target)
-        tryFatal("git commit -a -m \"Auto merge: Updating submodule pointers of %s to their submodule release branches\""%target)
+        msg = "Updating submodule pointers of %s to their corresponding release-branches"%target
+        log(msg)
+        updatebr = "submUpdate-on-%s-%s"%(target, str(uuid.uuid4()))
+
+        tryFatal("git checkout -b %s"%updatebr)
+        tryFatal("git commit -a -m \"%s\""%msg)
+
+        gotoBrAndSubmUpdate(target)
+        tryFatal("git merge --no-ff -m \"Auto merge: %s\" %s"%(msg,updatebr))
 
     return 0
 
