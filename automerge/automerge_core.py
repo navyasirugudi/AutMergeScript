@@ -331,7 +331,7 @@ def doMerge(branch):
                 #lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
 
                 if (containsSubmUpdates(sha)):
-                    sha = setSubModuleCommitOnSource(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
+                    sha = equateSubmoduleCommits(sha, target) #this is for not producing any conflicts during the automerge of the parent branches
 
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
                 print lCommitMsg
@@ -350,17 +350,17 @@ def doMerge(branch):
     # Test that we are fully merged
 
     #move out these 4 lines
-    subMEquatorBranchName = setSubModuleCommitOnSource(branch, target)
-    tryFatal1("git checkout %s"%subMEquatorBranchName)
-    ss = tryFatal1("git show -s --pretty=%h HEAD")
-    print "SubmoduleEquatorBranchName head: %s"%ss
+    # equalizedBr = equateSubmoduleCommits(branch, target)
+    # tryFatal1("git checkout %s"%equalizedBr)
+    # ss = tryFatal1("git show -s --pretty=%h HEAD")
+    # print "SubmoduleEquatorBranchName head: %s"%ss
 
-    tryFatal1("git checkout %s"%target)
-    mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, ss))
+    # tryFatal1("git checkout %s"%target)
+    # mergeResult, err=sh("git merge --no-ff -m \"Auto merge (Regular) Updating submodule pointer on target %s\" %s"%(target, ss))
 
     sha=tryFatal1("git show -s --pretty=%h HEAD")
 
-    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%subMEquatorBranchName)
+    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch)
     if err == 0:
         shaNew=tryFatal1("git show -s --pretty=%h HEAD")
     else:
@@ -430,8 +430,9 @@ def containsSubmUpdates(sha):
 
     return False
 
-
-def setSubModuleCommitOnSource(src, target):
+#returns src if no submodule commits need to be updated. Otherwise returns a branch with name 00_src_to_target_00 with submodule commits equated to target
+#def setSubModuleCommitOnSource(src, target):
+def equateSubmoduleCommits(src, target):
     submodules = getSubModules()
 
     if (len(submodules) == 0):
@@ -458,42 +459,7 @@ def setSubModuleCommitOnSource(src, target):
     if retcode != 0:
         src = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
         tryFatal1("git checkout -b %s"%src)
-        tryFatal("git commit -a -m \"Auto merge (Regular) equating submodule commit on sha to target branch %s\""%target)
-
-    #go back to original branch
-    tryFatal("git checkout %s"%target)
-    tryFatal("git submodule update")
-
-    return src
-
-def setSubModuleCommitOnTarget(src, target):
-    submodules = getSubModules()
-
-    if (len(submodules) == 0):
-        return src
-
-    print "Setting submodule commit on source: srcSha(%s), target(%s)"%(src, target)
-    curPath = tryFatal1("pwd")
-    srcSubMShas = []
-
-    for submodule in submodules:
-        submodulePath = submodule["path"]
-        srcSubMShas.append(getShaOfSubModule(src, submodulePath))
-
-    tryFatal("git checkout %s"%target)
-    tryFatal("git submodule update")
-
-    for i in range(len(submodules)):
-        submodulePath = submodules[i]["path"]
-        chdir(submodulePath)
-        tryFatal("git checkout %s"%srcSubMShas[i])
-        chdir(curPath)
-
-    output, retcode = sh("git diff --exit-code")
-    if retcode != 0:
-        testBranch = "00_%s-to-%s_00"%(src, target) #zeros for uniqueness
-        tryFatal1("git checkout -b %s"%testBranch)
-        tryFatal("git commit -a -m \"equating submodule commit to source branch %s\""%src)
+        tryFatal("git commit -a -m \"Auto merge (Regular) Equating submodule commit on sha to target branch %s\""%target)
 
     #go back to original branch
     tryFatal("git checkout %s"%target)
@@ -514,26 +480,17 @@ def getSubModules():
 
     urlregex = "(.*)url(.*)=(.*)git@%s/(.*)"%gitUrl()
     pathregex = "(.*)path(.*)=(.*)"
-    #print urlregex
-    #print pathregex
 
     url = re.compile(urlregex)
     path = re.compile(pathregex)
 
     module = {}
     for line in gitmfile:
-        #print line
         if len(line) == 0:
             continue
 
         pmatch = path.match(line)
         umatch = url.match(line)
-
-        #if (pmatch is not None):
-        #    print pmatch.groups()
-
-        #if (umatch is not None):
-        #    print umatch.groups()
 
         if (umatch is not None and len(umatch.groups()) == 4):
             module["name"] = umatch.groups()[3].strip()
