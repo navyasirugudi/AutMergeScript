@@ -72,6 +72,7 @@ def doAll(repoDir):
                 #errMsg = "Unable to finish automerge. Everything must be reported by now."
                 errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
+                tryFatal("git merge --abort")
                 #rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
                 #break
                 if i < len(REL_BRANCH) - 2:
@@ -346,8 +347,7 @@ def doMerge(branch):
                 commitMessages.append(lCommitMsg)
                 log ("@no-merge@ merging %s"%commitDetails)
             else:
-                #if containsSubmUpdates(sha):
-                sha = equateSubmoduleCommits(sha, target) #this is for not producing any conflicts in submodule updates
+                sha = equateSubmoduleCommits(sha, target) #this is for not producing any conflicts in submodule updates if there are any
 
                 lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
                 print lCommitMsg
@@ -435,7 +435,7 @@ def updateSubmodulePointers(target):
             tryFatal("git checkout %s"%brName)
             brHead = tryFatal1("git show --format='%H'")
 
-            if currSubmPointer != brHead: #the branches are created on need basis
+            if currSubmPointer != brHead:
                 update = True
 
         chdir(curPath)
@@ -452,18 +452,6 @@ def updateSubmodulePointers(target):
         tryFatal("git merge --no-ff -m \"Auto merge: %s\" %s"%(msg,updatebr))
 
     return 0
-
-def containsSubmUpdates(sha):
-    submodules = getSubModules()
-    output, err = sh("git log -m -1 --name-only --pretty=\"format:\" %s"%sha)
-    lines = breakStripStr(output)
-
-    for line in lines:
-        for submodule in submodules:
-            if line.strip() == submodule["path"].strip():
-                return True
-
-    return False
 
 #returns src if no submodule commits need to be updated.
 #Otherwise returns a branch with name 00_src_to_target_00 with submodule commits equated to target
