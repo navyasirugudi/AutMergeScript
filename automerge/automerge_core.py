@@ -91,13 +91,18 @@ def resetbrToRemote(br):
     sha = tryFatal1("git rev-parse origin/%s"%br)
     tryFatal1("git checkout %s"%br)
     tryFatal("git reset --hard %s"%sha)
+
     submodules = getSubModules()
+
     for subModule in submodules:
         currPwd = tryFatal1("pwd")
-        chdir(subModule["path"])
         br = getNamingConvention(getRepoName(), br)
-        if brExists(br):
+
+        chdir(subModule["path"])
+
+        if branchExists(br):
             resetbrToRemote(br)
+
         chdir(currPwd)
 
 def reportMergeFailure(*args):
