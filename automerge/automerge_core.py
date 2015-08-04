@@ -74,8 +74,10 @@ def doAll(repoDir):
                 #resetbrToRemote(next)
                 break
             else:
+                log ("Merge %s to %s: success"%(br,next))
                 reportMergeSuccess(br,next,"")
         else:
+            log ("Merge %s to %s: not needed"%(br,next))
             reportMergeSuccess(br,next,"not needed")
 
     reportAutoMergeResults()
