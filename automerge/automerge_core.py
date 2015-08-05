@@ -72,7 +72,6 @@ def doAll(repoDir):
                 #errMsg = "Unable to finish automerge. Everything must be reported by now."
                 errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
-                tryFatal("git merge --abort")
                 #rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
                 #break
                 if i < len(REL_BRANCH) - 2:
@@ -87,22 +86,28 @@ def doAll(repoDir):
     reportAutoMergeResults()
     return rc, errMsg
 
+#this resets the given branch and its submodules to where they were on the remote.
 def resetbrToRemote(br):
-    sha = tryFatal1("git rev-parse origin/%s"%br)
+    abortMerge() #erases anyconflicts on the branch due to previous merge
+
     tryFatal1("git checkout %s"%br)
-    tryFatal("git reset --hard %s"%sha)
+    sha = tryFatal1("git rev-parse origin/%s"%br)
+
+    tryFatal("git reset --hard %s"%sha) #set back to where the remote was
+    tryFatal("git submodule update")
+
+def abortMerge():
+    output, err = sh("git ls-files -u") #check if there are unmerged files
+    if len(output) > 0:
+        tryFatal("git merge --abort")
 
     submodules = getSubModules()
 
     for subModule in submodules:
         currPwd = tryFatal1("pwd")
-        br = getNamingConvention(getRepoName(), br)
-
         chdir(subModule["path"])
 
-        if branchExists(br):
-            resetbrToRemote(br)
-
+        abortMerge()
         chdir(currPwd)
 
 def reportMergeFailure(*args):
