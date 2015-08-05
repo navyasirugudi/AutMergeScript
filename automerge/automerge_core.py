@@ -45,7 +45,6 @@ def doAll(repoDir):
     commitMessages = []
 
     if repoDir:
-        print "Changing directory"
         chdir(repoDir)
 
     reportSetup()
@@ -64,16 +63,12 @@ def doAll(repoDir):
         if validateBranchList(br, next) > 0:
             errMsg = "Failed branch validation"
             log(errMsg)
-            rc = 1
             continue
 
         if not checkMerged (br,next) :
             if not autoMerge(br, next):
-                #errMsg = "Unable to finish automerge. Everything must be reported by now."
                 errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
-                #rc = 0 # We exit with success here since we expect everything reported so Jenkins must report success
-                #break
                 if i < len(REL_BRANCH) - 2:
                     resetbrToRemote(next) #this is for further merges to continue
             else:
@@ -193,33 +188,6 @@ def branch(idx):
 def rbranch(idx):
     return "remotes/origin/%s"%branch(idx)
 
-def validateBranchList():
-    result=0
-
-    for i in range(len(REL_BRANCH)) :
-        br=rbranch(i)
-        sha, err = sh("git rev-parse --quiet --verify %s"%br)
-        if err != 0 :
-           result=result+1
-           errMsg = "Missing branch %s"%br
-           log (errMsg)
-           reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), REL_BRANCH[i].strip(), errMsg)
-           continue
-
-        #if err is 0 check submodules
-        if (i == 0):
-            continue
-
-        branch1 = branch(i-1)
-        branch2 = branch(i)
-
-        if (branchExists(branch1) and branchExists(branch2)):
-            ok = validateSubModulesForMerge(branch1, branch2)
-            if not ok:
-               result=result+1
-
-    return result
-
 def validateBranchList(src, target):
     result=0
 
@@ -248,7 +216,6 @@ def validateSubModulesForMerge(srcbranch, target):
     #print "Validating submodules for merge between %s and %s"%(srcbranch, target)
     submodules = getSubModules()
     reponame = getRepoName()
-    msg = ""
     allok = True
 
     for submodule in submodules:
@@ -412,19 +379,6 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
 
     return True
 
-def equateSubmoduleCommitAndMerge(branch, target):
-    newbranch = equateSubmoduleCommits(branch, target)
-
-    if newbranch == branch:
-        return branch
-
-    tryFatal1("git checkout %s"%newbranch)
-    submoduleupdateSha = tryFatal1("git show -s --pretty=%h HEAD")
-
-    tryFatal1("git checkout %s"%target)
-    mergeResult, err=sh("git merge --no-ff -m \"Auto merge: Final submodule equator merge on source %s\" %s"%(branch, submoduleupdateSha))
-    return newbranch
-
 def updateSubmodulePointers(target):
     gotoBrAndSubmUpdate(target)
 
@@ -461,19 +415,21 @@ def updateSubmodulePointers(target):
         tryFatal("git commit -a -m \"%s\""%msg)
 
         gotoBrAndSubmUpdate(target)
-        tryFatal("git merge --no-ff -m \"Auto merge: %s\" %s"%(msg,updatebr))
+        output, err = sh("git merge --no-ff -m \"Auto merge: %s\" %s"%(msg,updatebr))
+        if err != 0:
+            log(output)
+            return err
 
     return 0
 
 #returns src if no submodule commits need to be updated.
-#Otherwise returns a branch with name 00_src_to_target_00 with submodule commits equated to target
+#Otherwise returns a branch with name src_to_target_uuid_$uuid with submodule commits equated to target
 def equateSubmoduleCommits(src, target):
     submodules = getSubModules()
 
     if (len(submodules) == 0):
         return src
 
-    #print "Setting submodule commit on source: srcSha(%s), target(%s)"%(src, target)
     curPath = tryFatal1("pwd")
     targetSubMShas = []
 
@@ -640,6 +596,10 @@ def pushChanges(old) :
     pushResult=""
     cb = currentBranch()
 
+    pushargs = ""
+    if dryRun:
+        pushargs = "--dry-run"
+
     for i in range(5):
         if not beforePushValidateHook is None:
             log("Start validation before push in %s"%cb)
@@ -649,7 +609,7 @@ def pushChanges(old) :
                 reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
                 return False
 
-        pushResult,err =sh("git push")
+        pushResult,err =sh("git push %s"%pushargs)
         #print "git push"
         #err = 0
         if err != 0: # todo: check rejected?

@@ -36,6 +36,8 @@ def main():
     parser.add_argument("-o","--validate-hook")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                     action="store_true")
+    parser.add_argument("-n", "--dry-run", help="merge but do not push",
+                    action="store_true")
 
     args = parser.parse_args()
 
@@ -46,6 +48,8 @@ def main():
         automerge_core.log("Using script %s for validation"%validateScript)
     if args.verbose:
         automerge_core.verbose = True
+    if args.dry_run:
+        automerge_core.dryRun = True
 
     automerge_core.reportMergeFailureFunc=reportMergeFailureLog
     automerge_core.reportMergeSuccessFunc=reportMergeSuccessLog
