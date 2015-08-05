@@ -98,7 +98,7 @@ def resetbrToRemote(br):
 
 def abortMerge():
     output, err = sh("git ls-files -u") #check if there are unmerged files
-    if len(output) > 0:
+    if err == 0 and len(output) > 0:
         tryFatal("git merge --abort")
 
     submodules = getSubModules()
