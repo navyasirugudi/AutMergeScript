@@ -276,12 +276,14 @@ def submIsMerged(srcbranch, target, submodule):
     commitList2 = []
     commitList3 = []
 
-    if not branchExists(targetSubMBranch) or not branchExists(srcSubMBranch):
-        commitList0=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(targetSubSha, srcSubSha)))
-    else:
+    if branchExists(targetSubMBranch) and branchExists(srcSubMBranch):
+        tryFatal("git checkout %s"%targetSubMBranch)
+        tryFatal("git checkout %s"%srcSubMBranch)
         commitList1=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(srcSubMBranch, srcSubSha)))
         commitList2=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(targetSubMBranch, targetSubSha)))
         commitList3=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(targetSubMBranch, srcSubSha)))
+    else:
+        commitList0=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(targetSubSha, srcSubSha)))
 
     chdir(curpath)
 
