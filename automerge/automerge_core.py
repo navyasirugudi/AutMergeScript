@@ -87,7 +87,7 @@ def doAll(repoDir):
 
 def fetchSubmodules():
     repo = os.environ["REPO"]
-    if "insights" in repo:
+    if "navyasirugudi" in repo:
         tryFatal("git submodule update --init --recursive")
         return
     else:
