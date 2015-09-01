@@ -88,9 +88,10 @@ def doAll(repoDir):
 def fetchSubmodules():
     repo = os.environ["REPO"]
     if "insights" in repo:
+        tryFatal("git submodule update --init --recursive")
         return
-
-    pointGitModulesToFork()
+    else:
+        pointGitModulesToFork()
 
     submodules = getSubModules()
     for sm in submodules:
