@@ -285,7 +285,7 @@ def submIsMerged(srcbranch, target, submodule):
     chdir(curpath)
 
     if len(commitList0) > 0:
-        return False, "Src submodule %s has commits to be merged into target submodule. One of expected release branches don't exist for subModule."%submodule["name"]
+        return False, "Src submodule %s has commits to be merged into target submodule. One of expected (%s or %s) release branches don't exist for subModule."%(submodule["name"], srcSubMBranch, targetSubMBranch)
 
     errMsg = ""
     if len(commitList1) > 0:
