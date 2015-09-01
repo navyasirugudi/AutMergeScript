@@ -453,6 +453,7 @@ def gotoBrAndSubmUpdate(br):
 
 def getSubModules():
     if (not os.path.isfile(".gitmodules")):
+        print "no submodules"
         return []
 
     gitmfile = open(".gitmodules", "r")
@@ -466,11 +467,20 @@ def getSubModules():
 
     module = {}
     for line in gitmfile:
+        print "Recieved %s"%line
         if len(line) == 0:
             continue
 
         pmatch = path.match(line)
         umatch = url.match(line)
+        
+        if umatch is None:
+            print urlregex
+            print "umatch is none"
+            
+        if pmatch is None:
+            print pathregex
+            print "pmatch is none"
 
         if (umatch is not None and len(umatch.groups()) == 5):
             module["name"] = umatch.groups()[4].strip().replace(".git", "")
