@@ -470,13 +470,18 @@ def getSubModules():
         
         if "url" in line:
             print "found url in line"
+            print "xx %s"%(line.split("/")[1].strip())
             module["name"] = line.split("/")[1].strip()
+            print module
             
         if "path" in line:
             print "found path in line"
+            print "ss %s"%(line.split("path = ")[1].strip())
             module["path"] = line.split("path =")[1].strip()
+            print module
 
         if ("path" in module and "name" in module):
+            print module
             modules.append(module)
             module = {}
 
