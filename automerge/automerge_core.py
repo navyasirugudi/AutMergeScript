@@ -87,11 +87,10 @@ def doAll(repoDir):
 
 def fetchSubmodules():
     repo = os.environ["REPO"]
-    if "navyasirugudi" in repo:
-        tryFatal("git submodule update --init --recursive")
+    if "insights" in repo:
         return
-    else:
-        pointGitModulesToFork()
+
+    pointGitModulesToFork()
 
     submodules = getSubModules()
     for sm in submodules:
@@ -106,7 +105,7 @@ def pointGitModulesToFork():
         return ""
 
     log("Pointing gitmodules to fork")
-    forkRepoRegex = "git@github.com:(.*)/(.*)"
+    forkRepoRegex = "git@git.soma.salesforce.com:(.*)/(.*)"
     forkRepoC = re.compile(forkRepoRegex)
     fmatch = forkRepoC.match(os.environ['REPO'])
 
@@ -434,14 +433,19 @@ def updateSubmodulePointers(target):
     if update:
         msg = "Updating submodule pointers of %s to their corresponding release-branches"%target
         log(msg)
-        updatebr = "submUpdate-on-%s-%s"%(target, str(uuid.uuid4()))
+        #updatebr = "submUpdate-on-%s-%s"%(target, str(uuid.uuid4()))
 
-        tryFatal("git checkout -b %s"%updatebr)
+        #tryFatal("git checkout -b %s"%updatebr)
         tryFatal("git status")
         tryFatal("git commit -a -m \"%s\""%msg)
+        output, err = sh("git commit -a -m \"AutoMerge submodule pointers integrated\"")
 
-        gotoBrAndSubmUpdate(target)
-        output, err = sh("git merge --no-ff -m \"Auto merge: %s\" %s"%(msg,updatebr))
+        #gotoBrAndSubmUpdate(target)
+        #output, err = sh("git merge --no-ff -m \"Auto merge: %s\" %s"%(msg,updatebr))
+        #if err != 0:
+        #    log(output)
+        #    return err
+        #output1, err1 = sh("git commit -a -m \"AutoMerge submodule changes\")
         if err != 0:
             log(output)
             return err
@@ -454,35 +458,32 @@ def gotoBrAndSubmUpdate(br):
 
 def getSubModules():
     if (not os.path.isfile(".gitmodules")):
-        print "no submodules"
         return []
 
     gitmfile = open(".gitmodules", "r")
     modules = []
 
-    urlregex = "(.*)url(.*)=(.*)git@github.com:(.*)/(.*)"
-    pathregex = "(.*)path(.*)=(.*)"
+    urlregex = "(\s)*url(\s)*=(\s)*git@git.soma.salesforce.com:(.*)/(.*)"
+    pathregex = "(\s)*path(\s)*=(.*)"
+
+    url = re.compile(urlregex)
+    path = re.compile(pathregex)
 
     module = {}
     for line in gitmfile:
-        print "Recieved %s"%(line.strip())
         if len(line) == 0:
             continue
-        
-        if "url" in line:
-            print "found url in line"
-            print "xx %s"%(line.split("/")[1].strip())
-            module["name"] = line.split("/")[1].strip()
-            print module
-            
-        if "path" in line:
-            print "found path in line"
-            print "ss %s"%(line.split("path = ")[1].strip())
-            module["path"] = line.split("path =")[1].strip()
-            print module
+
+        pmatch = path.match(line)
+        umatch = url.match(line)
+
+        if (umatch is not None and len(umatch.groups()) == 5):
+            module["name"] = umatch.groups()[4].strip().replace(".git", "")
+
+        elif (pmatch is not None and len(pmatch.groups()) == 3):
+            module["path"] = pmatch.groups()[2].strip()
 
         if ("path" in module and "name" in module):
-            print module
             modules.append(module)
             module = {}
 
