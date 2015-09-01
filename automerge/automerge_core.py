@@ -459,8 +459,8 @@ def getSubModules():
     gitmfile = open(".gitmodules", "r")
     modules = []
 
-    urlregex = "(\s)*url(\s)*=(\s)*git@github.com:(.*)/(.*)"
-    pathregex = "(\s)*path(\s)*=(.*)"
+    urlregex = "(.*)url(.*)=(.*)git@github.com:(.*)/(.*)"
+    pathregex = "(.*)path(.*)=(.*)"
 
     url = re.compile(urlregex)
     path = re.compile(pathregex)
