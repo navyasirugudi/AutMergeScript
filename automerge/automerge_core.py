@@ -105,7 +105,7 @@ def pointGitModulesToFork():
         return ""
 
     log("Pointing gitmodules to fork")
-    forkRepoRegex = "git@git.soma.salesforce.com:(.*)/(.*)"
+    forkRepoRegex = "git@github.com:(.*)/(.*)"
     forkRepoC = re.compile(forkRepoRegex)
     fmatch = forkRepoC.match(os.environ['REPO'])
 
@@ -458,7 +458,7 @@ def getSubModules():
     gitmfile = open(".gitmodules", "r")
     modules = []
 
-    urlregex = "(\s)*url(\s)*=(\s)*git@git.soma.salesforce.com:(.*)/(.*)"
+    urlregex = "(\s)*url(\s)*=(\s)*git@github.com:(.*)/(.*)"
     pathregex = "(\s)*path(\s)*=(.*)"
 
     url = re.compile(urlregex)
