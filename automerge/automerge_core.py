@@ -290,18 +290,14 @@ def submIsMerged(srcbranch, target, submodule):
     if len(commitList0) > 0:
         return False, "Src submodule %s has commits to be merged into target submodule. One of expected (%s or %s) release branches don't exist for subModule."%(submodule["name"], srcSubMBranch, targetSubMBranch)
 
-    errMsg = ""
     if len(commitList1) > 0:
-        errMsg = "Src branch pointer for %s is not merged into corresponding src release branch %s"%(submodule["name"], srcSubMBranch)
+        return False, "Src branch pointer for %s is not merged into corresponding src release branch %s"%(submodule["name"], srcSubMBranch)
     if len(commitList2) > 0:
-        errMsg = "%s\nTarget branch pointer for %s is not merged into corresponding target release branch %s"%(errMsg, submodule["name"], targetSubMBranch)
+        return False, "Target branch pointer for %s is not merged into corresponding target release branch %s"%(errMsg, submodule["name"], targetSubMBranch)
     if len(commitList3) > 0:
-        errMsg = "%s\nSrc branch pointer for %s is not merged into target submodule branch %s"%(errMsg, submodule["name"], targetSubMBranch)
+        return False, "Src branch pointer for %s is not merged into target submodule branch %s"%(errMsg, submodule["name"], targetSubMBranch)
 
-    if not errMsg:
-        return False, errMsg
-
-    return True
+    return True, ""
 
 def currentBranch():
     return tryFatal1("git rev-parse --abbrev-ref HEAD")
