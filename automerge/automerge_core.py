@@ -102,7 +102,7 @@ def pointGitModulesToFork():
         return ""
 
     log("Pointing gitmodules to fork")
-    forkRepoRegex = "git@git.soma.salesforce.com:(.*)/(.*)"
+    forkRepoRegex = "git@github.com:(.*)/(.*)"
     forkRepoC = re.compile(forkRepoRegex)
     fmatch = forkRepoC.match(os.environ['REPO'])
 
