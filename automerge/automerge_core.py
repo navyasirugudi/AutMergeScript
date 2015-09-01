@@ -317,9 +317,9 @@ dryRun=0 # if set to 1 then, don't actually merge
 def doMerge(branch):
     target= currentBranch()
 
-    errCode = updateSubmodulePointers(target)
+    errCode, msg = updateSubmodulePointers(target)
     if errCode != 0:
-        message = "Unable to update submodule pointers to appropriate branches in target branch %s"%target
+        message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(target, msg)
         log(message)
         reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
         return False
@@ -502,10 +502,11 @@ def getShaOfSubModule(parentbranch, submodulepath):
     return sha
 
 def getNamingConvention(reponame, branch):
-    if branch == "master":
-        return "master"
+    return branch
+    # if branch == "master":
+    #     return "master"
 
-    return reponame + "_" + branch
+    # return reponame + "_" + branch
 
 def getRepoName():
     name = tryFatal1("basename $(git remote show -n origin | grep Fetch | cut -d: -f2-)")
