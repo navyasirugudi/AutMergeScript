@@ -1,123 +1,575 @@
-#!/usr/bin/python
-
-import sys
 import os
-import argparse
+import subprocess
+from subprocess import Popen, PIPE
+from os import path,getcwd,chdir
+import pdb
+import re
+import uuid
+
 import json
-import os, errno
-import xml.etree.cElementTree as ET
+# Const
+NO_MERGE="@no-merge@"
 
 
-TESTSUITE="AutoMerge"
-testSuite=ET.Element("testsuite", name=TESTSUITE, tests="0",errors="0", failures="0",skip="0")
+toolsDir = path.abspath(path.dirname(__file__)+"/..")
+REL_BRANCH=["master"]
 
 
-REPO="git@git.soma.salesforce.com:pmantha/Integration.git"
-REPO_DIR="Integration"
+commitMessages = []
+def getMergeCommitMessages():
+    return commitMessages
 
-if os.environ.get("REPO","") != "":
-    REPO=os.environ["REPO"]
+# Python 2.7 Enum type
+class AutoMergeErrors:
+    ValidateBranchError,MergeError,PushValidationError = range(3)
 
-if os.environ.get("REPO_DIR","") != "":
-    REPO_DIR=os.environ["REPO_DIR"]
 
-os.environ["REPO"] = REPO
-os.environ["REPO_DIR"] = REPO_DIR
+def loadBranches(configFile):
+    f = open(toolsDir+"/"+configFile, "r")
+    branchDef = json.load(f)
+    global REL_BRANCH
+    REL_BRANCH=branchDef["release-branches"]
 
-toolsDir=os.path.abspath(os.path.dirname(os.path.abspath(__file__))+"/..")
-sys.path.append(toolsDir+"/config")
-sys.path.append(toolsDir+"/automerge")
-import automerge_core
+verbose=False
+beforePushTestHook = None
+beforePushValidateHook = None
+reportMergeFailureFunc=None
+reportSetupFunc=None
+reportAutoMergeResultsFunc=None
+reportMergeSuccessFunc=None
 
-validateScript=None
+def doAll(repoDir):
+    errMsg = ""
+    rc = 0
+    global commitMessages
+    commitMessages = []
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-o","--validate-hook")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                    action="store_true")
-    parser.add_argument("-n", "--dry-run", help="merge but do not push",
-                    action="store_true")
+    if repoDir:
+        chdir(repoDir)
 
-    args = parser.parse_args()
+    reportSetup()
+    log ("Current working directory is %s"%path.abspath(getcwd()) )
+    tryFatal("git fetch")
 
-    if args.validate_hook:
-        global validateScript
-        validateScript = args.validate_hook
-        automerge_core.beforePushValidateHook=beforePushValidateHook
-        automerge_core.log("Using script %s for validation"%validateScript)
-    if args.verbose:
-        automerge_core.verbose = True
-    if args.dry_run:
-        automerge_core.dryRun = True
+    fetchSubmodules()
 
-    automerge_core.reportMergeFailureFunc=reportMergeFailureLog
-    automerge_core.reportMergeSuccessFunc=reportMergeSuccessLog
-    automerge_core.reportSetupFunc=MergeJenkinsSetup
-    automerge_core.reportAutoMergeResultsFunc=writeTestXml
-    mkdir_p(toolsDir+"/tmp")
-    os.chdir(toolsDir+"/tmp")
-    automerge_core.tryFatal("rm -rf "+REPO_DIR)
-    automerge_core.tryFatal("git clone %s %s"%(REPO, REPO_DIR))
-    automerge_core.loadBranches("config/release-branches.json")
-    updatessh()
-    return automerge_core.doAll(REPO_DIR)
+    for i in range(len(REL_BRANCH)) :
+        br=branch(i)
+        if br == 'master':
+            rc = 0
+            break # We reached end of list
 
-def updatessh():
-    sh("git remote set-url origin https://navyasirugudi@github.com/navyasirugudi/%s.git"%automerge_core.getRepoName())
+        next=branch(i+1)
 
-def beforePushValidateHook():
-    output, err = automerge_core.sh(validateScript)
-    if err == 0:
-        automerge_core.log("Passed validation on %s"%automerge_core.currentBranch())
-        return True
+        if validateBranchList(br, next) > 0:
+            errMsg = "Failed branch validation"
+            log(errMsg)
+            continue
+
+        if not checkMerged (br,next) :
+            if not autoMerge(br, next):
+                errMsg = "Unable to finish automerge between %s and %s"%(br,next)
+                log (errMsg)
+                if i < len(REL_BRANCH) - 2:
+                    resetbrToRemote(next) #this is for further merges to continue
+            else:
+                log ("Merge %s to %s: success"%(br,next))
+                reportMergeSuccess(br,next,"")
+        else:
+            log ("Merge %s to %s: not needed"%(br,next))
+            reportMergeSuccess(br,next,"(not needed)")
+
+    reportAutoMergeResults()
+    return rc, errMsg
+
+def fetchSubmodules():
+    repo = os.environ["REPO"]
+    if "insights" or "navyasirugudi" in repo:
+        tryFatal("git submodule update --init --recursive")
+        return
+
+    pointGitModulesToFork()
+
+    submodules = getSubModules()
+    for sm in submodules:
+        path = sm["path"]
+        pwd = currentPath()
+        chdir(path)
+        fetchSubmodules()
+        chdir(pwd)
+
+def pointGitModulesToFork():
+    if (not os.path.isfile(".gitmodules")):
+        return ""
+
+    log("Pointing gitmodules to fork")
+    forkRepoRegex = "git@github.com:(.*)/(.*)"
+    forkRepoC = re.compile(forkRepoRegex)
+    fmatch = forkRepoC.match(os.environ['REPO'])
+
+    if (fmatch is not None and len(fmatch.groups()) > 0):
+        forkName = fmatch.groups()[0]
+        sh("sed -i='' 's/insights/%s/g' .gitmodules"%forkName)
+        tryFatal("git submodule update --init")
+        tryFatal("git checkout .gitmodules")
+
+#this resets the given branch and its submodules to where they were on the remote.
+def resetbrToRemote(br):
+    abortMerge() #erases anyconflicts on the branch due to previous merge
+
+    tryFatal1("git checkout %s"%br)
+    sha = tryFatal1("git rev-parse origin/%s"%br)
+
+    tryFatal("git reset --hard %s"%sha) #set back to where the remote was
+    tryFatal("git submodule update")
+
+def abortMerge():
+    output, err = sh("git ls-files -u") #check if there are unmerged files
+    if err == 0 and len(output) > 0:
+        tryFatal("git reset --merge")
+
+    submodules = getSubModules()
+
+    for subModule in submodules:
+        currPwd = currentPath()
+        chdir(subModule["path"])
+
+        abortMerge()
+        chdir(currPwd)
+
+def reportMergeFailure(*args):
+    if reportMergeFailureFunc:
+        reportMergeFailureFunc(*args)
     else:
-        automerge_core.log("Validation failed %s"%automerge_core.currentBranch())
-        automerge_core.log(output)
+        log ("Merge failure: %s"%[x for x in args])
+
+def reportMergeSuccess(*args):
+    if reportMergeSuccessFunc:
+        reportMergeSuccessFunc(*args)
+    else:
+        log ("Merge success: %s"%[x for x in args])
+
+def reportSetup():
+    if reportSetupFunc:
+        reportSetupFunc()
+    else:
+        log ("Default report setup not set.")
+
+def reportAutoMergeResults():
+    if reportAutoMergeResultsFunc:
+        reportAutoMergeResultsFunc()
+    else:
+        log ("Nothing to report")
+
+
+def sh(cmd):
+    if verbose:
+        print cmd
+
+    proc = Popen(cmd + " 2>&1",  shell=True, stdout=PIPE, stderr=PIPE)
+    output, err = proc.communicate()
+    retcode = proc.poll()
+    if verbose:
+        print output
+        if retcode != 0:
+            print "CODE is non-zero %d for %s"%(retcode, cmd)
+    return (output, retcode)
+
+
+def tryFatal(cmd):
+    output, retcode = sh(cmd)
+    if retcode:
+        log ("%s\n%s"%(cmd, output))
+        raise subprocess.CalledProcessError(retcode, cmd, output=output)
+    return output
+
+# Same as tryFatal by returns only first line in the output
+def tryFatal1(cmd):
+    output = breakStripStr(tryFatal(cmd))
+    if len(output)>0:
+            return output[0]
+
+    return ""
+
+def log (message):
+   print "AUTOMERGE: %s" % message
+
+# Split text into array of lines, strip all blanks from each line and return non-empty
+def breakStripStr(output):
+    # split the output
+    outList = output.split("\n")
+    # for each non empty line strip the spaces
+    return [i.strip() for i in outList if i.strip()]
+
+# Checks if barcnh $1 is merged into branch $2
+# return True if not merged False otherwise
+def checkMerged(mergeFrom, mergeTo):
+    log ("check if branch %s merged into %s" %(mergeFrom, mergeTo))
+    merged=breakStripStr(tryFatal("git branch -a --merged remotes/origin/%s"%mergeTo)) # || echo "remotes/origin/$mergeFrom")
+
+    if "remotes/origin/%s"%mergeFrom in merged:
+        log ("%s to %s: OK"%(mergeFrom, mergeTo))
+        return True
+
+    log ("%s is not merged to %s!"%(mergeFrom, mergeTo))
+    return False
+
+
+def branch(idx):
+    return REL_BRANCH[idx]
+
+def rbranch(idx):
+    return "remotes/origin/%s"%branch(idx)
+
+def validateBranchList(src, target):
+    log("Validating required branches for merge from %s to %s"%(src, target))
+    result=0
+
+    for br in [src, target]:
+        if not branchExists(br):
+            result=result+1
+            errMsg = "Missing branch %s"%br
+            log (errMsg)
+            reportMergeFailure(AutoMergeErrors.ValidateBranchError, getRepoName(), src, target, errMsg)
+            continue
+
+    if (result == 0):
+        ok = validateSubModulesForMerge(src, target)
+        if not ok:
+           result=result+1
+
+    if (result == 0):
+        log("Branch validation successful between %s to %s"%(src, target))
+
+    return result
+
+def validateSubModulesForMerge(srcbranch, target):
+    submodules = getSubModules()
+    reponame = getRepoName()
+    allok = True
+
+    for submodule in submodules:
+        merged, msg = submIsMerged(srcbranch, target, submodule)
+        if merged:
+            continue
+
+        allok = False
+        log (msg)
+        reportMergeFailure(AutoMergeErrors.ValidateBranchError, submodule["name"], srcbranch, target, msg)
+
+    return allok
+
+def submIsMerged(srcbranch, target, submodule):
+
+    targetSubSha = getShaOfSubModule(target, submodule["path"])
+    srcSubSha = getShaOfSubModule(srcbranch, submodule["path"])
+
+    reponame = getRepoName()
+    targetSubMBranch = getNamingConvention(reponame, target)
+    srcSubMBranch = getNamingConvention(reponame, srcbranch)
+
+    curpath = currentPath()
+    chdir(submodule["path"])
+
+    commitList0 = []
+    commitList1 = []
+    commitList2 = []
+    commitList3 = []
+
+    if branchExists(targetSubMBranch) and branchExists(srcSubMBranch):
+        tryFatal("git checkout %s"%targetSubMBranch)
+        tryFatal("git checkout %s"%srcSubMBranch)
+        commitList1=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(srcSubMBranch, srcSubSha)))
+        commitList2=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(targetSubMBranch, targetSubSha)))
+        commitList3=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(targetSubMBranch, srcSubSha)))
+    else:
+        commitList0=breakStripStr(tryFatal("git log --pretty=%%H %s..%s"%(targetSubSha, srcSubSha)))
+
+    chdir(curpath)
+
+    if len(commitList0) > 0:
+        return False, "Src submodule %s has commits to be merged into target submodule. One of expected (%s or %s) release branches don't exist for subModule."%(submodule["name"], srcSubMBranch, targetSubMBranch)
+
+    if len(commitList1) > 0:
+        return False, "Src branch pointer for %s is not merged into corresponding src release branch %s"%(submodule["name"], srcSubMBranch)
+    if len(commitList2) > 0:
+        return False, "Target branch pointer for %s is not merged into corresponding target release branch %s"%(submodule["name"], targetSubMBranch)
+    if len(commitList3) > 0:
+        return False, "Src branch pointer for %s is not merged into target submodule branch %s"%(submodule["name"], targetSubMBranch)
+
+    return True, ""
+
+def currentBranch():
+    return tryFatal1("git rev-parse --abbrev-ref HEAD")
+
+def currentPath():
+    return tryFatal1("pwd")
+
+dryRun=0 # if set to 1 then, don't actually merge
+# $1 - branch to merge into current
+# Take care of @no-merge@ here. changes that come from any branch that has @no-merge@ in it's name or @no-merge@ in any commit
+# must be skipped but marked merged.
+# In case of conflict or other error do all GUS/GitHub business
+# return 0 if merge succesfull
+# return 1 if merge failed and reporting suceeded
+# exit with code 1 if reporting failed (someone must review Jenkins job)
+# Both branches must be checked out and in sync with remote before calling
+def doMerge(branch):
+    target= currentBranch()
+
+    errCode, msg = updateSubmodulePointers(target)
+    if errCode != 0:
+        message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(target, msg)
+        log(message)
+        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
         return False
 
-def MergeJenkinsSetup():
-    testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
-    testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="MergeJenkinsSetup")
+    global commitMessages
+
+    # Determine all merges that occurred to target since branch deviated from it
+    revList=breakStripStr(tryFatal("git log --merges --pretty=%%H %s..%s"%(target,branch)))
+    log ("Merge commits: %s"%revList)
+
+    # Walk throuh the list in reverse order
+    for idx in reversed(range(len(revList))) :
+        s=revList[idx]
+        # Merges can be on either branches. So pick only those that are not in target
+        branches=breakStripStr(tryFatal("git branch --contains %s"%s))
+        merged=False
+        for br in branches:
+            log ("Check %s against %s"%(br,target))
+            if br == target:
+                merged=True
+                break
+
+        if not merged :
+            #commit $s  is not in $target. So it's merge candidate.
+
+            sha=tryFatal1("git show --format=%%H -s %s"%s)
+            commitMessage=tryFatal1("git show --format=%%s -s %s"%s)
+            commitDetails=tryFatal1("git show --format=\"%%cd %%h %%s\" --date=iso -s %s"%s)
+            log ("Merging %s to %s [ %s ]"%(branch,target,commitDetails))
+
+            if NO_MERGE in commitMessage:
+                # No merge commit. Merge it with -s ours flag
+                # This should not fail because of conflict
+                lCommitMsg = '\"Auto merge (Skip) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
+                tryFatal("git merge --no-ff -s ours -m %s"%(lCommitMsg))
+                commitMessages.append(lCommitMsg)
+                log ("@no-merge@ merging %s"%commitDetails)
+            else:
+                lCommitMsg = '\"Auto merge (Regular) from %s->%s: %s\" %s' % (branch, target, commitMessage, sha)
+                mergeResult, err=sh("git merge --no-ff -m %s"%(lCommitMsg))
+
+                if  err != 0:
+                    log ("Conflict merging %s"%commitDetails)
+                    reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, mergeResult)
+                    return False
+                commitMessages.append(lCommitMsg)
+                log ("Succesfully merged %s"%commitDetails)
 
 
-def reportMergeFailureLog(*args):
-    # GUS and PR goes here
-    #log (args)
-    testSuite.attrib["failures"] = str(int(testSuite.attrib["failures"]) + 1)
-    testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
-    if args[0] == automerge_core.AutoMergeErrors.MergeError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s: %s to %s"%(args[1],args[2],args[3]))
-        failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[4]
-    elif args[0] == automerge_core.AutoMergeErrors.ValidateBranchError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s: %s to %s: ValidateBranchError"%(args[1], args[2], args[3]))
-        failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[4]
-    elif args[0] == automerge_core.AutoMergeErrors.PushValidationError:
-        testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s: %s to %s: PushBranchValidationError"%(args[1], args[2], args[3]))
-        failure=ET.SubElement(testCase, "failure", message="error")
-        failure.text=args[4]
+    log("All merge commits (if any) are now in target branch %s. Validating that branches %s and %s are completely merged."%(target, branch, target))
+    # Test that we are fully merged
 
-def reportMergeSuccessLog(*args):
-    # GUS and PR goes here
-    testSuite.attrib["tests"] = str(int(testSuite.attrib["tests"]) + 1)
+    sha=tryFatal1("git show -s --pretty=%h HEAD")
 
-    testCase=ET.SubElement(testSuite, "testcase", classname=TESTSUITE, name="Merge %s to %s %s"%(args[0],args[1],args[2]))
+    #this test will only validate if there are any direct commits after the last merge.
+    output, err = sh("git merge --no-ff -m \"Test Merge\" %s"%branch)
+    if err == 0:
+        shaNew=tryFatal1("git show -s --pretty=%h HEAD")
+    else:
+        shaNew="0"
+        log (output)
 
-def writeTestXml():
-    testFile=os.getcwd() + "/AutoMergeResults_tests.xml"
-    print "writing test xml file in dir: %s" % testFile
-    tree=ET.ElementTree(testSuite)
-    tree.write(testFile)
+    if sha != shaNew:
+        message="Branch %s is not fully merged into %s after merging all pull request \
+merges. Do you have commits without PR? Manual intevention is required."%(branch, target)
+        log(message)
+        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
+        return False
+
+    tryFatal1("git checkout %s"%target)
+
+    return True
+
+def updateSubmodulePointers(target):
+    gotoBrAndSubmUpdate(target)
+
+    submodules = getSubModules()
+    if (len(submodules) == 0):
+        return 0, ""
+
+    curPath = currentPath()
+    reponame = getRepoName()
+    update = False
+
+    for submodule in submodules:
+        brName = getNamingConvention(reponame, target)
+        submodulePath = submodule["path"]
+        chdir(submodulePath)
+
+        if branchExists(brName):
+            currSubmPointer = tryFatal1("git show --format='%H'")
+
+            tryFatal("git checkout %s"%brName)
+            brHead = tryFatal1("git show --format='%H'")
+
+            if currSubmPointer != brHead:
+                update = True
+
+        chdir(curPath)
+
+    if update:
+        msg = "Updating submodule pointers of %s to their corresponding release-branches"%target
+        log(msg)
+        updatebr = "submUpdate-on-%s-%s"%(target, str(uuid.uuid4()))
+
+        tryFatal("git checkout -b %s"%updatebr)
+        tryFatal("git commit -a -m \"%s\""%msg)
+
+        gotoBrAndSubmUpdate(target)
+        #Should be a merged commit because this should not appear as a direct commit for futher merges to propogate.
+        output, err = sh("git merge --no-ff -m \"Auto merge submodule update: %s\" %s"%(msg,updatebr))
+        if err != 0:
+            return err
+
+    return 0
+
+def gotoBrAndSubmUpdate(br):
+    tryFatal("git checkout %s"%br)
+    tryFatal("git submodule update")
+
+# def gitUrl():
+#     repo = os.environ["REPO"]
+#     repoLocation = repo.split("/")
+
+#     if ("git@git.soma.salesforce.com:" in repoLocation[0]):
+#         return repoLocation[0]
+
+#     if ("https://git.soma.salesforce.com" in repo):
+#         return "git@%s:%s"%(repoLocation[2],repoLocation[3])
+
+#     return ""
 
 
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc: # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else: raise
+def getSubModules():
+    if (not os.path.isfile(".gitmodules")):
+        return []
 
-exit(main())
+    gitmfile = open(".gitmodules", "r")
+    modules = []
+
+    urlregex = "(\s)*url(\s)*=(\s)*git@github.com:(.*)/(.*)"
+    pathregex = "(\s)*path(\s)*=(.*)"
+
+    url = re.compile(urlregex)
+    path = re.compile(pathregex)
+
+    module = {}
+    for line in gitmfile:
+        print "Obtained: %s"%line
+        if len(line) == 0:
+            continue
+
+        pmatch = path.match(line)
+        umatch = url.match(line)
+
+        if (umatch is not None and len(umatch.groups()) == 5):
+            module["name"] = umatch.groups()[4].strip().replace(".git", "")
+
+        elif (pmatch is not None and len(pmatch.groups()) == 3):
+            module["path"] = pmatch.groups()[2].strip()
+
+        if ("path" in module and "name" in module):
+            modules.append(module)
+            module = {}
+
+    return modules
+
+#gets the sha of the head of the submodule in the parent branch
+def getShaOfSubModule(parentbranch, submodulepath):
+    curPath = currentPath()
+
+    gotoBrAndSubmUpdate(parentbranch)
+
+    chdir(submodulepath)
+
+    sha = tryFatal1("git show --format='%H'")
+
+    chdir(curPath)
+
+    return sha
+
+def getNamingConvention(reponame, branch):
+    return branch
+    # if branch == "master":
+    #     return "master"
+
+    # return reponame + "_" + branch
+
+def getRepoName():
+    name = tryFatal1("basename $(git remote show -n origin | grep Fetch | cut -d: -f2-)")
+    return name.replace('.git','')
+
+def branchExists(branchName):
+    sha, err = sh("git rev-parse --quiet --verify remotes/origin/%s"%branchName)
+    return err == 0
+
+# Push data to origin. In case of failure, attempt to pull latest version and retry up to 5 times
+def pushChanges(old) :
+    if not beforePushTestHook is None:
+        beforePushTestHook()
+
+    pushResult=""
+    cb = currentBranch()
+
+    pushargs = ""
+    if dryRun:
+        pushargs = "--dry-run"
+
+    for i in range(5):
+        if not beforePushValidateHook is None:
+            log("Start validation before push in %s"%cb)
+            if not beforePushValidateHook():
+                errMsg = "Validation before push in %s failed"%cb
+                log (errMsg)
+                reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
+                return False
+
+        pushResult,err =sh("git push %s"%pushargs)
+        err = 0
+        if err != 0: # todo: check rejected?
+            # push failed - typically because target moved forward and push is rejected
+            tryFatal("git reset --hard HEAD^") # Undo merge
+            tryFatal("git pull") # Update from origin
+            # try again
+
+            if not doMerge(old):
+                return False
+
+            continue # Merge succeeded retry push
+
+        return True # done
+
+    log ("Can't push after few tries. Last push error:\n%s\n"%pushResult)
+    return False
+
+# Attempt automatically merge branch $1 to branch $2
+# If return is 1 then further merging must be aborted
+def autoMerge(old, new):
+    log ("Trying automerge %s to %s"%(old,new))
+
+    # Following commands should not normally fail.
+    tryFatal("git checkout %s"%old)
+    tryFatal("git pull")
+    tryFatal("git checkout %s"%new)
+    tryFatal("git pull")
+
+    # Fail in merge requires a ticket and PR
+    if not doMerge(old):
+        return False
+
+    return pushChangesFunc(old)
+
+pushChangesFunc=pushChanges
