@@ -462,31 +462,17 @@ def getSubModules():
     urlregex = "(.*)url(.*)=(.*)git@github.com:(.*)/(.*)"
     pathregex = "(.*)path(.*)=(.*)"
 
-    url = re.compile(urlregex)
-    path = re.compile(pathregex)
-
     module = {}
     for line in gitmfile:
         print "Recieved %s"%(line.strip())
         if len(line) == 0:
             continue
-
-        pmatch = path.match(line.strip())
-        umatch = url.match(line.strip())
         
-        if umatch is None:
-            print urlregex
-            print "umatch is none"
+        if "url" in line:
+            module["name"] = line.split("/")[1].strip()
             
-        if pmatch is None:
-            print pathregex
-            print "pmatch is none"
-
-        if (umatch is not None and len(umatch.groups()) == 5):
-            module["name"] = umatch.groups()[4].strip().replace(".git", "")
-
-        elif (pmatch is not None and len(pmatch.groups()) == 3):
-            module["path"] = pmatch.groups()[2].strip()
+        if "path" in line:
+            module["path"] = line.split("path =")[1].strip()
 
         if ("path" in module and "name" in module):
             modules.append(module)
