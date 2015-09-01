@@ -537,8 +537,7 @@ def pushChanges(old) :
                 reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
                 return False
 
-        #pushResult,err =sh("git push %s"%pushargs)
-        err = 0
+        pushResult,err =sh("git push %s"%pushargs)
         if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
             tryFatal("git reset --hard HEAD^") # Undo merge
