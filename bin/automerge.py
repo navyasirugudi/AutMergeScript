@@ -64,7 +64,7 @@ def main():
     return automerge_core.doAll(REPO_DIR)
 
 def updatessh():
-    sh("git remote set-url origin https://navyasirugudi@github.com/navyasirugudi/%s.git"%automerge_core.getRepoName())
+    automerge_core.tryFatal("git remote set-url origin https://navyasirugudi@github.com/navyasirugudi/%s.git"%automerge_core.getRepoName())
 
 def beforePushValidateHook():
     output, err = automerge_core.sh(validateScript)
