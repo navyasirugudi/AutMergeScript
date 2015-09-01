@@ -467,12 +467,12 @@ def getSubModules():
 
     module = {}
     for line in gitmfile:
-        print "Recieved %s"%line
+        print "Recieved %s"%(line.strip())
         if len(line) == 0:
             continue
 
-        pmatch = path.match(line)
-        umatch = url.match(line)
+        pmatch = path.match(line.strip())
+        umatch = url.match(line.strip())
         
         if umatch is None:
             print urlregex
