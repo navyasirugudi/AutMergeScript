@@ -412,6 +412,7 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
 
 #this will keep any un-updated release branches of submodules to the respective branches
 def preSetup(old, new):
+    print "in pre setup"
     errCode, msg, updated = updateSubmodulePointers(old)
     if errCode != 0:
         message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(old, msg)
@@ -429,13 +430,15 @@ def preSetup(old, new):
         if pushErr != 0:
             log ("Can't push submodules updated commit on %s. Push error:\n%s\n"%(old, pushResult))
             return False
-
+    print "in pre setup: update submodule pointers new"
     errCode, msg, updated = updateSubmodulePointers(new)
     if errCode != 0:
         message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(new, msg)
         log(message)
         reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), old, new, message)
         return False
+    print "in pre setup: returning true"
+    return True
 
 def updateSubmodulePointers(target):
     gotoBrAndSubmUpdate(target)
