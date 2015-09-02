@@ -38,6 +38,10 @@ reportSetupFunc=None
 reportAutoMergeResultsFunc=None
 reportMergeSuccessFunc=None
 
+
+def updatessh():
+    tryFatal("git remote set-url origin https://navyasirugudi@github.com/navyasirugudi/%s.git"%getRepoName())
+
 def doAll(repoDir):
     errMsg = ""
     rc = 0
@@ -49,6 +53,8 @@ def doAll(repoDir):
 
     reportSetup()
     log ("Current working directory is %s"%path.abspath(getcwd()) )
+    updatessh()
+
     tryFatal("git fetch")
 
     fetchSubmodules()
