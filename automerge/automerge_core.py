@@ -438,9 +438,9 @@ def updateSubmodulePointers(target):
         #Should be a merged commit because this should not appear as a direct commit for futher merges to propogate.
         output, err = sh("git merge --no-ff -m \"Auto merge submodule update: %s\" %s"%(msg,updatebr))
         if err != 0:
-            return err
+            return err, output
 
-    return 0
+    return 0, ""
 
 def gotoBrAndSubmUpdate(br):
     tryFatal("git checkout %s"%br)
