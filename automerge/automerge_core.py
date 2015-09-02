@@ -76,8 +76,8 @@ def doAll(repoDir):
             if not autoMerge(br, next):
                 errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
-                if i < len(REL_BRANCH) - 2:
-                    resetbrToRemote(next) #this is for further merges to continue
+                rc = 0
+                break
             else:
                 log ("Merge %s to %s: success"%(br,next))
                 reportMergeSuccess(br,next,"")
