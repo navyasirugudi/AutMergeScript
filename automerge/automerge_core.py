@@ -101,8 +101,8 @@ def subUpdateReqd(src):
 
         srcSubSha = tryFatal1("git show --format='%H'")
         
-        tryFatal("git pull")
         tryFatal("git checkout %s"%src)
+        tryFatal("git pull")
         srcsubMHead = tryFatal1("git show --format='%H'")
 
         if srcSubSha != srcsubMHead:
