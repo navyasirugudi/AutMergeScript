@@ -71,7 +71,7 @@ def doAll(repoDir):
             log(errMsg)
             continue
 
-        if not checkMerged (br,next) or subUpdateReqd(br):
+        if not checkMerged (br,next):
             if not autoMerge(br, next):
                 errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
@@ -86,35 +86,6 @@ def doAll(repoDir):
 
     reportAutoMergeResults()
     return rc, errMsg
-
-def subUpdateReqd(src):
-    tryFatal("git checkout %s"%src)
-    tryFatal("git pull")
-    tryFatal("git submodule update")
-
-    submodules = getSubModules()
-    reqd = False
-    curPath = currentPath()
-
-    for subModule in submodules:
-        chdir(subModule["path"])
-        tryFatal1("pwd")
-        srcSubSha = tryFatal1("git show --format='%H'")
-
-        tryFatal("git checkout %s"%src)
-        tryFatal("git pull")
-        srcsubMHead = tryFatal1("git show --format='%H'")
-
-        if srcSubSha != srcsubMHead:
-            reqd = True
-
-        tryFatal1("pwd")
-        chdir(curPath)
-
-        if reqd:
-            break
-
-    return reqd
 
 def fetchSubmodules():
     repo = os.environ["REPO"]
@@ -146,30 +117,6 @@ def pointGitModulesToFork():
         sh("sed -i='' 's/insights/%s/g' .gitmodules"%forkName)
         tryFatal("git submodule update --init")
         tryFatal("git checkout .gitmodules")
-
-#this resets the given branch and its submodules to where they were on the remote.
-def resetbrToRemote(br):
-    abortMerge() #erases anyconflicts on the branch due to previous merge
-
-    tryFatal1("git checkout %s"%br)
-    sha = tryFatal1("git rev-parse origin/%s"%br)
-
-    tryFatal("git reset --hard %s"%sha) #set back to where the remote was
-    tryFatal("git submodule update")
-
-def abortMerge():
-    output, err = sh("git ls-files -u") #check if there are unmerged files
-    if err == 0 and len(output) > 0:
-        tryFatal("git reset --merge")
-
-    submodules = getSubModules()
-
-    for subModule in submodules:
-        currPwd = currentPath()
-        chdir(subModule["path"])
-
-        abortMerge()
-        chdir(currPwd)
 
 def reportMergeFailure(*args):
     if reportMergeFailureFunc:
@@ -423,28 +370,9 @@ merges. Do you have commits without PR? Manual intevention is required."%(branch
 
     return True
 
-
 #this will keep any un-updated release branches of submodules to the respective branches
 def preSetup(old, new):
     print "in pre setup"
-    errCode, msg, updated = updateSubmodulePointers(old)
-    if errCode != 0:
-        message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(old, msg)
-        log(message)
-        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), old, new, message)
-        return False
-
-    if updated:
-        #push for the first branch
-        validateErr, pushErr, pushResult = validateAndPush(old, new)
-
-        if validateErr:
-            log ("Can't validate submodules updated commit on %s"%old)
-            return False
-        if pushErr != 0:
-            log ("Can't push submodules updated commit on %s. Push error:\n%s\n"%(old, pushResult))
-            return False
-    print "in pre setup: update submodule pointers new"
     errCode, msg, updated = updateSubmodulePointers(new)
     if errCode != 0:
         message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(new, msg)
@@ -566,24 +494,6 @@ def branchExists(branchName):
     sha, err = sh("git rev-parse --quiet --verify remotes/origin/%s"%branchName)
     return err == 0
 
-def validateAndPush(fromBr, toBr):
-    pushargs = ""
-    if dryRun:
-        pushargs = "--dry-run"
-
-    if not beforePushValidateHook is None:
-            log("Start validation before push in %s"%toBr)
-            if not beforePushValidateHook():
-                errMsg = "Validation before push in %s failed"%toBr
-                log (errMsg)
-                reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), fromBr, toBr, errMsg)
-                return True, False, 0
-
-    pushResult,err =sh("git push %s"%pushargs)
-    if err != 0:
-        log("git push error: %s"%pushResult)
-    return False, err, pushResult
-
 # Push data to origin. In case of failure, attempt to pull latest version and retry up to 5 times
 def pushChanges(old) :
     if not beforePushTestHook is None:
@@ -592,13 +502,22 @@ def pushChanges(old) :
     pushResult=""
     cb = currentBranch()
 
+    pushargs = ""
+    if dryRun:
+        pushargs = "--dry-run"
+
     for i in range(5):
+        if not beforePushValidateHook is None:
+            log("Start validation before push in %s"%cb)
+            if not beforePushValidateHook():
+                errMsg = "Validation before push in %s failed"%cb
+                log (errMsg)
+                reportMergeFailure(AutoMergeErrors.PushValidationError, getRepoName(), old, cb, errMsg)
+                return False
 
-        validateErr, pushErr, pushResult = validateAndPush(old, cb)
-        if validateErr:
-            return False
+        pushResult,err=sh("git push %s"%pushargs)
 
-        if pushErr != 0: # todo: check rejected?
+        if err != 0: # todo: check rejected?
             # push failed - typically because target moved forward and push is rejected
             tryFatal("git reset --hard HEAD^") # Undo merge
             tryFatal("git pull") # Update from origin
