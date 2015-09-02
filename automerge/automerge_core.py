@@ -426,7 +426,7 @@ def preSetup(old, new):
         if validateErr:
             log ("Can't validate submodules updated commit on %s"%old)
             return False
-        if pushErr:
+        if pushErr != 0:
             log ("Can't push submodules updated commit on %s. Push error:\n%s\n"%(old, pushResult))
             return False
 
@@ -563,6 +563,8 @@ def validateAndPush(fromBr, toBr):
                 return True, False, 0
 
     pushResult,err =sh("git push %s"%pushargs)
+    if err != 0:
+        log("git push error: %s"%pushResult)
     return False, err, pushResult
 
 # Push data to origin. In case of failure, attempt to pull latest version and retry up to 5 times
