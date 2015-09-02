@@ -322,17 +322,17 @@ dryRun=0 # if set to 1 then, don't actually merge
 # Both branches must be checked out and in sync with remote before calling
 def doMerge(branch):
     target= currentBranch()
-
-    errCode, msg = updateSubmodulePointers(target)
-    if errCode != 0:
-        message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(target, msg)
-        log(message)
-        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
-        return False
     
     errCode, msg = updateSubmodulePointers(branch)
     if errCode != 0:
         message = "Unable to update submodule pointers to appropriate branches in src branch %s\nError:\n%s"%(branch, msg)
+        log(message)
+        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
+        return False
+
+    errCode, msg = updateSubmodulePointers(target)
+    if errCode != 0:
+        message = "Unable to update submodule pointers to appropriate branches in target branch %s\nError:\n%s"%(target, msg)
         log(message)
         reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
         return False
