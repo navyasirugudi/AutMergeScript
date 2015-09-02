@@ -94,13 +94,13 @@ def subUpdateReqd(src):
 
     submodules = getSubModules()
     reqd = False
+    curPath = currentPath()
 
     for subModule in submodules:
-        curPath = currentPath()
         chdir(subModule["path"])
-
+        tryFatal1("pwd")
         srcSubSha = tryFatal1("git show --format='%H'")
-        
+
         tryFatal("git checkout %s"%src)
         tryFatal("git pull")
         srcsubMHead = tryFatal1("git show --format='%H'")
@@ -108,6 +108,7 @@ def subUpdateReqd(src):
         if srcSubSha != srcsubMHead:
             reqd = True
 
+        tryFatal1("pwd")
         chdir(curPath)
 
         if reqd:
