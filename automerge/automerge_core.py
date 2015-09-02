@@ -323,7 +323,7 @@ dryRun=0 # if set to 1 then, don't actually merge
 def doMerge(branch):
     target= currentBranch()
 
-    if not preSetup(branch, target)
+    if not preSetup(branch, target):
         return False
 
     errCode, msg = updateSubmodulePointers(branch)
