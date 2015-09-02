@@ -440,24 +440,13 @@ def updateSubmodulePointers(target):
         if err != 0:
             return err, output
 
+        tryFatal("git submodule update") #this is needed since after the merge the the old submodule commits show up as new changes to commit which might cause CONFLICT for upcoming merges.
+
     return 0, ""
 
 def gotoBrAndSubmUpdate(br):
     tryFatal("git checkout %s"%br)
     tryFatal("git submodule update")
-
-# def gitUrl():
-#     repo = os.environ["REPO"]
-#     repoLocation = repo.split("/")
-
-#     if ("git@git.soma.salesforce.com:" in repoLocation[0]):
-#         return repoLocation[0]
-
-#     if ("https://git.soma.salesforce.com" in repo):
-#         return "git@%s:%s"%(repoLocation[2],repoLocation[3])
-
-#     return ""
-
 
 def getSubModules():
     if (not os.path.isfile(".gitmodules")):
