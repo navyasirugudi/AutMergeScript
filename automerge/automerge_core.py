@@ -329,7 +329,14 @@ def doMerge(branch):
         log(message)
         reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
         return False
-
+    
+    errCode, msg = updateSubmodulePointers(branch)
+    if errCode != 0:
+        message = "Unable to update submodule pointers to appropriate branches in src branch %s\nError:\n%s"%(branch, msg)
+        log(message)
+        reportMergeFailure(AutoMergeErrors.MergeError, getRepoName(), branch, target, message)
+        return False
+    
     global commitMessages
 
     # Determine all merges that occurred to target since branch deviated from it
