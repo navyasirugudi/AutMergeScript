@@ -71,7 +71,7 @@ def doAll(repoDir):
             log(errMsg)
             continue
 
-        if not checkMerged (br,next) or subUpdateReqd(br, next):
+        if not checkMerged (br,next) or subUpdateReqd(br):
             if not autoMerge(br, next):
                 errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
