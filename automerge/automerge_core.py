@@ -100,7 +100,8 @@ def subUpdateReqd(src):
         chdir(subModule["path"])
 
         srcSubSha = tryFatal1("git show --format='%H'")
-
+        
+        tryFatal("git pull")
         tryFatal("git checkout %s"%src)
         srcsubMHead = tryFatal1("git show --format='%H'")
 
