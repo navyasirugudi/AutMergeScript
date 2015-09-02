@@ -42,6 +42,7 @@ reportMergeSuccessFunc=None
 def updatessh():
     tryFatal("git remote set-url origin https://navyasirugudi@github.com/navyasirugudi/%s.git"%getRepoName())
 
+
 def doAll(repoDir):
     errMsg = ""
     rc = 0
@@ -53,8 +54,6 @@ def doAll(repoDir):
 
     reportSetup()
     log ("Current working directory is %s"%path.abspath(getcwd()) )
-    updatessh()
-
     tryFatal("git fetch")
 
     fetchSubmodules()
@@ -72,7 +71,7 @@ def doAll(repoDir):
             log(errMsg)
             continue
 
-        if not checkMerged (br,next) :
+        if not checkMerged (br,next) or subUpdateReqd(br, next):
             if not autoMerge(br, next):
                 errMsg = "Unable to finish automerge between %s and %s"%(br,next)
                 log (errMsg)
@@ -87,6 +86,33 @@ def doAll(repoDir):
 
     reportAutoMergeResults()
     return rc, errMsg
+
+def subUpdateReqd(src):
+    tryFatal("git checkout %s"%src)
+    tryFatal("git pull")
+    tryFatal("git submodule update")
+
+    submodules = getSubModules()
+    reqd = False
+
+    for subModule in submodules:
+        curPath = currentPath()
+        chdir(subModule["path"])
+
+        srcSubSha = tryFatal1("git show --format='%H'")
+
+        tryFatal("git checkout %s"%src)
+        srcsubMHead = tryFatal1("git show --format='%H'")
+
+        if srcSubSha != srcsubMHead:
+            reqd = True
+
+        chdir(curPath)
+
+        if reqd:
+            break
+
+    return reqd
 
 def fetchSubmodules():
     repo = os.environ["REPO"]
