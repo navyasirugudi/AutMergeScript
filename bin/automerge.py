@@ -60,11 +60,7 @@ def main():
     automerge_core.tryFatal("rm -rf "+REPO_DIR)
     automerge_core.tryFatal("git clone %s %s"%(REPO, REPO_DIR))
     automerge_core.loadBranches("config/release-branches.json")
-    updatessh()
     return automerge_core.doAll(REPO_DIR)
-
-def updatessh():
-    automerge_core.tryFatal("git remote set-url origin https://navyasirugudi@github.com/navyasirugudi/%s.git"%automerge_core.getRepoName())
 
 def beforePushValidateHook():
     output, err = automerge_core.sh(validateScript)
