@@ -301,7 +301,7 @@ def submIsMerged(srcbranch, target, submodule):
     if len(commitList2) > 0:
         return False, "Target branch pointer for %s is not merged into corresponding target release branch %s"%(submodule["name"], targetSubMBranch)
     if len(commitList3) > 0:
-        return False, "Src branch pointer for %s is not merged into target submodule branch %s"%(submodule["name"], targetSubMBranch)
+        return False, "Src branch (%s) pointer for %s is not merged into target submodule branch %s"%(srcSubMBranch, submodule["name"], targetSubMBranch)
 
     return True, ""
 
